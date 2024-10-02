@@ -19,19 +19,18 @@ public class Executor {
     private String passportSeriesNumber;
 
     @Column(nullable = false)
-    private double weight;
+    private Double weight;
 
     @Column(nullable = false)
-    private double height;
+    private Double height;
 
     @Column(columnDefinition = "integer default 0", nullable = false)
-    private double rating;
+    private Double rating;
 
     @Column(name = "completed_orders", columnDefinition = "integer default 0", nullable = false)
-    private int completedOrders;
+    private Integer completedOrders;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "username", referencedColumnName = "username")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 }

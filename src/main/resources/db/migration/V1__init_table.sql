@@ -4,18 +4,13 @@ CREATE TABLE users (
                        telegram VARCHAR(30) NOT NULL
 );
 
-CREATE TYPE role_enum AS ENUM ('CUSTOMER', 'EXECUTOR', 'ADMIN');
 
 CREATE TABLE auth_data (
                            username VARCHAR(30) REFERENCES users(username) ON DELETE CASCADE,
                            password VARCHAR(100) NOT NULL,
-                           role role_enum NOT NULL,
+                           role VARCHAR(15) NOT NULL,
                            PRIMARY KEY (username)
 );
-
-CREATE TYPE fight_status AS ENUM ('PENDING', 'VICTORY', 'LOSS');
-
-CREATE TYPE order_status AS ENUM ('DONE', 'WAITING', 'PERFORMANCE');
 
 CREATE TABLE cities (
                         id SERIAL PRIMARY KEY,
@@ -57,7 +52,7 @@ CREATE TABLE orders (
                         city_id BIGINT REFERENCES cities(id),
                         victim_id BIGINT REFERENCES victims(id),
                         deadline DATE NOT NULL,
-                        status order_status NOT NULL
+                        status VARCHAR(15) NOT NULL
 );
 
 CREATE TABLE order_mutilations (
@@ -70,5 +65,5 @@ CREATE TABLE fights (
                         id SERIAL PRIMARY KEY,
                         executor_id VARCHAR REFERENCES executors(username),
                         order_id BIGINT REFERENCES orders(id),
-                        status fight_status NOT NULL
+                        status VARCHAR(15) NOT NULL
 );
