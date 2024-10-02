@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+        - ../2. Init Database:/docker-entrypoint-initdb.d
+        - rdb_data:/var/lib/postgresql/data
+        - ./create-db.sql:/docker-entrypoint-initdb.d/create-db.sql
+
+    ports:
+      - "1234:5432"
+
+volumes:
+  rdb_data:
