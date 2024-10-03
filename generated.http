@@ -1,0 +1,74 @@
+#POST http://localhost:8080/api/v1/sports/user
+#Content-Type: application/json
+#
+#{
+#  "username": "user4",
+#  "nick": "Johnny",
+#  "telegram": "@johnny",
+#  "password": "secure_password",
+#  "role": "EXECUTOR"
+#}
+###
+
+# Получить пользователя по username
+#GET http://localhost:8080/api/v1/sports/user/user4
+#Content-Type: application/json
+
+###
+# Создать исполнителя
+#POST http://localhost:8080/api/v1/sports/user/executor
+#Content-Type: application/json
+#
+#{
+#  "username": "user4",
+#  "passportSeriesNumber": "123456789",
+#  "weight": 80.5,
+#  "height": 180.3
+#}
+
+###
+
+# Получить исполнителя по username
+#GET http://localhost:8080/api/v1/sports/user/executor/user3
+#Content-Type: application/json
+
+###
+
+# Обновить данные исполнителя
+#PUT http://localhost:8080/api/v1/sports/user/executor/user4
+#Content-Type: application/json
+#
+#{
+#  "username": "user3",
+#  "passportSeriesNumber": "987654321",
+#  "weight": 85.0,
+#  "height": 182.0
+#}
+
+###
+#Получить исполнителя по username
+#POST  http://localhost:8080/api/v1/sports/user/city/change
+#Content-Type: application/json
+#
+#{
+#  "name": "New City5",
+#  "region": "New Region5"
+#}
+###
+### Get all cities with pagination
+#GET http://localhost:8080/api/v1/sports/user/city?page=0&size=10
+#Accept: application/json
+
+#### Delete a city by ID
+#DELETE http://localhost:8080/api/v1/sports/admin/city/2
+
+#GET http://localhost:8080/api/v1/sports/user/mutilation
+#Accept: application/json
+
+#POST  http://localhost:8080/api/v1/sports/user/mutilation/change
+#Content-Type: application/json
+#
+#{
+#  "type": "избить",
+#  "price": 15000
+#}

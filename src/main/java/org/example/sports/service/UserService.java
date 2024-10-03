@@ -1,13 +1,14 @@
 package org.example.sports.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.example.sports.exceptions.BadRequestException;
-import org.example.sports.exceptions.UserNotFoundException;
-import org.example.sports.model.dto.CreateUserRequest;
-import org.example.sports.model.dto.UserDto;
-import org.example.sports.model.entity.AuthorizationData;
-import org.example.sports.model.entity.User;
-import org.example.sports.model.entity.enums.Role;
+import org.example.sports.controller.user.dto.CreateUserRequest;
+import org.example.sports.controller.user.dto.UpdateUserRequest;
+import org.example.sports.controller.user.dto.UserDto;
+import org.example.sports.mapper.UserMapper;
+import org.example.sports.model.AuthorizationData;
+import org.example.sports.model.User;
+import org.example.sports.model.enums.Role;
 import org.example.sports.repositore.AuthorizationRepository;
 import org.example.sports.repositore.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,12 +21,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final AuthorizationRepository authorizationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
-    public UserDto createUser(UserDto userDto, String password, String role) {
-        if (userDto.username() == null || userDto.nick() == null || userDto.telegram() == null) {
-            throw new BadRequestException("All fields must be filled.");
-        }
-
+    public UserDto createUser(CreateUserRequest userDto) {
         User user = User.builder()
                 .username(userDto.username())
                 .nick(userDto.nick())
@@ -34,8 +32,8 @@ public class UserService {
 
         AuthorizationData auth = AuthorizationData.builder()
                 .username(userDto.username())
-                .password(passwordEncoder.encode(password))
-                .role(Role.valueOf(role))
+                .password(passwordEncoder.encode(userDto.password()))
+                .role(Role.valueOf(userDto.role()))
                 .user(user)
                 .build();
 
@@ -44,38 +42,35 @@ public class UserService {
             throw new IllegalArgumentException("This username" + auth.getUsername() + "is already in use.");
         }
 
-        userRepository.save(user);
+        User createdUser = userRepository.save(user);
         authorizationRepository.save(auth);
 
-        return userDto;
+        return userMapper.toDto(createdUser);
     }
 
     public UserDto getUser(String username) {
         return userRepository.findById(username)
-                .map(user -> new UserDto(user.getUsername(), user.getNick(), user.getTelegram()))
-                .orElseThrow(() -> new UserNotFoundException("User with username '" + username + "' not found"));
+                .map(userMapper::toDto)
+                .orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' not found"));
     }
 
 
     public void deleteUser(String username) {
         if (!userRepository.existsById(username)) {
-            throw new UserNotFoundException("User with username '" + username + "' not found");
+            throw new EntityNotFoundException("User with username '" + username + "' not found");
         }
         userRepository.deleteById(username);
     }
 
-    public UserDto updateUser(String username, UserDto userDto) {
+    public UserDto updateUser(String username, UpdateUserRequest updateUserRequest) {
         User user = userRepository.findById(username)
-                .orElseThrow(() -> new UserNotFoundException("User with username '" + username + "' not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' not found"));
 
-        if (userDto.nick() == null || userDto.telegram() == null) {
-            throw new BadRequestException("Nick and Telegram must not be null.");
-        }
 
-        user.setNick(userDto.nick());
-        user.setTelegram(userDto.telegram());
-        userRepository.save(user);
-        return userDto;
+        user.setNick(updateUserRequest.nick());
+        user.setTelegram(updateUserRequest.telegram());
+        User updatedUser = userRepository.save(user);
+        return userMapper.toDto(updatedUser);
     }
 
 
