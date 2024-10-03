@@ -1,6 +1,7 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.user.dto.CreateUserRequest;
 import org.example.sports.controller.user.dto.UpdateUserRequest;
@@ -23,6 +24,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
+    @Transactional
     public UserDto createUser(CreateUserRequest userDto) {
         User user = User.builder()
                 .username(userDto.username())

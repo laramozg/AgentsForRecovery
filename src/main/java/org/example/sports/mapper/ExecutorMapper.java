@@ -7,7 +7,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class ExecutorMapper {
     public ExecutorDto toDto(Executor executor) {
-        return new ExecutorDto(executor.getUsername(), executor.getPassportSeriesNumber(), executor.getWeight(),
-                executor.getHeight(), executor.getRating(), executor.getCompletedOrders());
+        return new ExecutorDto(
+                executor.getUsername(),
+                executor.getPassportSeriesNumber(),
+                executor.getWeight(),
+                executor.getHeight(),
+                executor.getRating(),
+                executor.getCompletedOrders());
     }
 }

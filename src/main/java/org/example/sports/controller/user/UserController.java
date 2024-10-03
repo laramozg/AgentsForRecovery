@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.user.dto.CreateUserRequest;
 import org.example.sports.controller.user.dto.UpdateUserRequest;
 import org.example.sports.controller.user.dto.UserDto;
-import org.example.sports.model.User;
 import org.example.sports.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-
 
     @PostMapping
     public ResponseEntity<UserDto> createUser(

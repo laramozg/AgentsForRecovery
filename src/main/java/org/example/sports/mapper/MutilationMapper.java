@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 public class MutilationMapper {
 
     public MutilationDto toDto(Mutilation mutilation) {
-        return new MutilationDto(mutilation.getId(), mutilation.getType(), mutilation.getPrice());
+        return new MutilationDto(
+                mutilation.getId(),
+                mutilation.getType(),
+                mutilation.getPrice());
     }
 }

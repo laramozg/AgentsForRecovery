@@ -25,8 +25,9 @@ public class CityController {
     @GetMapping
     public ResponseEntity<Page<CityDto>> getAllCities(
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+            @RequestParam(value = "size", defaultValue = "50") int size
     ) {
+        if (size > 50) {size = 50;}
         Page<CityDto> cities = cityService.findAllCities(page, size);
         long totalCities = cityService.countCities();
 

@@ -5,6 +5,8 @@ import lombok.*;
 import org.example.sports.model.enums.OrderStatus;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -36,5 +38,8 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
+
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<OrderMutilation> orderMutilations = new ArrayList<>();
 
 }

@@ -1,16 +1,15 @@
 package org.example.sports.controller.mutilation;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.mutilation.dto.CreateMutilation;
 import org.example.sports.controller.mutilation.dto.MutilationDto;
 import org.example.sports.service.MutilationService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/sports/user/mutilation")
@@ -24,8 +23,13 @@ public class MutilationController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<MutilationDto>> getAllMutilations(Pageable pageable) {
-        Page<MutilationDto> mutilations = mutilationService.findAllMutilations(pageable);
+    public ResponseEntity<List<MutilationDto>> getAllMutilations(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "50") int size) {
+        if (size > 50) {
+            size = 50;
+        }
+        List<MutilationDto> mutilations = mutilationService.findAllMutilations(page, size);
         return ResponseEntity.ok(mutilations);
     }
 
