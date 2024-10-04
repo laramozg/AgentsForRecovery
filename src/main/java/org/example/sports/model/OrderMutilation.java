@@ -17,11 +17,11 @@ public class OrderMutilation {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id", nullable = false, insertable = false, updatable = false)
     private Order order;
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mutilation_id", nullable = false)
+    @JoinColumn(name = "mutilation_id", nullable = false, insertable = false, updatable = false)
     private Mutilation mutilation;
 }

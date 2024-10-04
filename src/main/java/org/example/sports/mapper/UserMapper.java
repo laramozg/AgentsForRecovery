@@ -12,6 +12,7 @@ public class UserMapper {
         return new UserDto(
                 user.getUsername(),
                 user.getNick(),
-                user.getTelegram());
+                user.getTelegram(),
+                user.getRole().toString());
     }
 }

@@ -22,7 +22,4 @@ public class AuthorizationData {
     @OneToOne(fetch = FetchType.LAZY)
     private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
 }

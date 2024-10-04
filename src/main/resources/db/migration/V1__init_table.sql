@@ -1,14 +1,14 @@
 CREATE TABLE users (
                        username VARCHAR(30) PRIMARY KEY,
                        nick VARCHAR(30) NOT NULL,
-                       telegram VARCHAR(30) NOT NULL
+                       telegram VARCHAR(30) NOT NULL,
+                       role VARCHAR(15) NOT NULL
 );
 
 
 CREATE TABLE auth_data (
                            username VARCHAR(30) REFERENCES users(username) ON DELETE CASCADE,
                            password VARCHAR(100) NOT NULL,
-                           role VARCHAR(15) NOT NULL,
                            PRIMARY KEY (username)
 );
 

@@ -7,6 +7,7 @@ import org.example.sports.model.Order;
 import org.example.sports.model.OrderMutilation;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
@@ -19,9 +20,11 @@ public class OrderMapper {
                 order.getVictim().getId(),
                 order.getDeadline(),
                 order.getStatus().toString(),
-                order.getOrderMutilations().stream()
-                        .map(this::toMutilationDto)
-                        .collect(Collectors.toList())
+                order.getOrderMutilations() != null ?
+                        order.getOrderMutilations().stream()
+                                .map(this::toMutilationDto)
+                                .collect(Collectors.toList()) :
+                        Collections.emptyList()
         );
     }
 

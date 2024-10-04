@@ -1,6 +1,7 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.fight.dto.CreateFight;
 import org.example.sports.controller.fight.dto.FightDto;
@@ -32,7 +33,7 @@ public class FightService {
         return fights.map(fightMapper::toFightDto);
     }
 
-
+    @Transactional
     public FightDto createFight(CreateFight fightDto) {
         Executor executor = executorRepository.findById(fightDto.executorId())
                 .orElseThrow(() -> new EntityNotFoundException("Executor not found"));

@@ -30,12 +30,12 @@ public class UserService {
                 .username(userDto.username())
                 .nick(userDto.nick())
                 .telegram(userDto.telegram())
+                .role(Role.valueOf(userDto.role()))
                 .build();
 
         AuthorizationData auth = AuthorizationData.builder()
                 .username(userDto.username())
                 .password(passwordEncoder.encode(userDto.password()))
-                .role(Role.valueOf(userDto.role()))
                 .user(user)
                 .build();
 

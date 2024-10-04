@@ -1,6 +1,7 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.order.dto.CreateOrderRequest;
 import org.example.sports.controller.order.dto.OrderDto;
@@ -13,7 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -27,15 +27,16 @@ public class OrderService {
     private final CityRepository cityRepository;
     private final OrderMapper orderMapper;
 
-
+    @Transactional
     public OrderDto createOrder(CreateOrderRequest request) {
         User user = userRepository.findById(request.username())
-                .orElseThrow(() -> new EntityNotFoundException("City not found"));;
+                .orElseThrow(() -> new EntityNotFoundException("City not found"));
+        ;
         City city = cityRepository.findById(request.cityId())
                 .orElseThrow(() -> new EntityNotFoundException("City not found"));
         Victim victim = victimRepository.findById(request.victimId())
                 .orElseThrow(() -> new EntityNotFoundException("Victim not found"));
-        List<OrderMutilation> orderMut = new ArrayList<>();
+
         Order order = Order.builder()
                 .user(user)
                 .city(city)
@@ -50,16 +51,17 @@ public class OrderService {
             Mutilation mutilation = mutilationRepository.findById(mutilationId)
                     .orElseThrow(() -> new EntityNotFoundException("Mutilation not found"));
 
-
             OrderMutilation orderMutilation = OrderMutilation.builder()
                     .order(savedOrder)
                     .mutilation(mutilation)
                     .build();
 
-            orderMut.add(orderMutilation);
             orderMutilationRepository.save(orderMutilation);
+
         }
-        savedOrder.setOrderMutilations(orderMut);
+        List<OrderMutilation> orderMutilations = orderMutilationRepository.findByOrder_Id(savedOrder.getId());
+        savedOrder.setOrderMutilations(orderMutilations);
+
 
         return orderMapper.toDto(savedOrder);
     }
