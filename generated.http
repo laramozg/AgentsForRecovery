@@ -111,7 +111,7 @@
 #  "cityId": 1,
 #  "victimId": 1,
 #  "deadline": "2024-11-30",
-#  "mutilationIds": [1,2]
+#  "mutilationIds": [1]
 #
 #}
 ### Get Orders With Status Waiting
