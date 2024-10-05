@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.fight.dto.CreateFight;
 import org.example.sports.controller.fight.dto.FightDto;
+import org.example.sports.model.enums.FightStatus;
 import org.example.sports.service.FightService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -32,5 +33,13 @@ public class FightController {
     public ResponseEntity<FightDto> createFight(@Valid @RequestBody CreateFight fightDto) {
         FightDto createdFight = fightService.createFight(fightDto);
         return new ResponseEntity<>(createdFight, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<FightDto> updateFightStatus(
+            @PathVariable Long id,
+            @RequestParam FightStatus newStatus) {
+        FightDto updatedFight = fightService.updateFightStatus(id, newStatus);
+        return ResponseEntity.ok(updatedFight);
     }
 }

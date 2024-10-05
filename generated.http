@@ -2,11 +2,11 @@
 #Content-Type: application/json
 #
 #{
-#  "username": "user3",
-#  "nick": "user3",
-#  "telegram": "@user3",
-#  "password": "user_password3",
-#  "role": "EXECUTOR"
+#  "username": "user2",
+#  "nick": "user2",
+#  "telegram": "@user2",
+#  "password": "user_password2",
+#  "role": "CUSTOMER"
 #}
 ###
 
@@ -71,10 +71,10 @@
 #Content-Type: application/json
 #
 #{
-#  "type": "сломать руку",
-#  "price": 14000
+#  "type": "сломать ногу",
+#  "price": 15000
 #}
-
+###
 #PUT http://localhost:8080/api/v1/sports/user/mutilation/1
 #Content-Type: application/json
 #
@@ -110,7 +110,7 @@
 #  "username": "user2",
 #  "cityId": 1,
 #  "victimId": 1,
-#  "deadline": "2024-12-31",
+#  "deadline": "2024-11-30",
 #  "mutilationIds": [1,2]
 #
 #}
@@ -124,12 +124,12 @@
 ###
 #POST http://localhost:8080/api/v1/sports/user/fight
 #Content-Type: application/json
-#Accept: application/json
 #
 #{
 #  "executorId": "user3",
-#  "orderId": 20
+#  "orderId": 1
 #}
 ###
 #GET http://localhost:8080/api/v1/sports/user/fight/user3?page=0&size=50
 
+PUT http://localhost:8080/api/v1/sports/user/fight/1/status?newStatus=VICTORY
