@@ -69,7 +69,9 @@ public class FightService {
         if (newStatus == FightStatus.VICTORY) {
             order.setStatus(OrderStatus.DONE);
             executor.setCompletedOrders(executor.getCompletedOrders() + 1);
-        }else order.setStatus(OrderStatus.WAITING);
+        }else {
+            order.setStatus(OrderStatus.WAITING);
+        }
 
         orderRepository.save(order);
         updateExecutorRating(executor);

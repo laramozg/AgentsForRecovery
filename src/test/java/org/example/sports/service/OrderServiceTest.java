@@ -1,49 +1,26 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.example.sports.controller.order.dto.CreateOrderRequest;
 import org.example.sports.controller.order.dto.OrderDto;
 import org.example.sports.model.*;
 import org.example.sports.model.enums.OrderStatus;
 import org.example.sports.model.enums.Role;
 import org.example.sports.repositore.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@Transactional
-class OrderServiceTest {
-
-    @Container
-    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpassword");
-
-    @DynamicPropertySource
-    static void registerPgProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgresContainer::getUsername);
-        registry.add("spring.datasource.password", postgresContainer::getPassword);
-    }
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class OrderServiceTest extends AbstractServiceTest{
 
     @Autowired
     private OrderService orderService;
@@ -63,11 +40,19 @@ class OrderServiceTest {
     @Autowired
     private OrderRepository orderRepository;
 
-    @Autowired
-    private OrderMutilationRepository orderMutilationRepository;
+    private User userCreate;
+    private City cityCreate;
+    private Victim victimCreate;
 
     @BeforeEach
     void setUp() {
+        userCreate = buildCreateUser();
+        cityCreate = buildCreateCity();
+        victimCreate = buildCreateVictim();
+    }
+
+    @AfterEach
+    void tearDown() {
         orderRepository.deleteAll();
         userRepository.deleteAll();
         cityRepository.deleteAll();
@@ -77,17 +62,14 @@ class OrderServiceTest {
 
     @Test
     void testCreateOrder() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        City city = cityRepository.save(new City(1L, "TestCity", "Region"));
-        Victim victim = victimRepository.save(new Victim(1L, "John", "Doe", "Workplace", "Position", "Address", "1234567890", "Description"));
-        Mutilation mutilation = mutilationRepository.save(new Mutilation(1L,"Type A", 1000));
+        Mutilation mutilationCreate = buildCreateMutilation();
 
         CreateOrderRequest request = new CreateOrderRequest(
-                user.getUsername(),
-                city.getId(),
-                victim.getId(),
+                userCreate.getUsername(),
+                cityCreate.getId(),
+                victimCreate.getId(),
                 LocalDate.now().plusDays(5),
-                List.of(mutilation.getId())
+                List.of(mutilationCreate.getId())
         );
 
         OrderDto createdOrder = orderService.createOrder(request);
@@ -95,18 +77,13 @@ class OrderServiceTest {
         assertNotNull(createdOrder);
         assertEquals(OrderStatus.WAITING.toString(), createdOrder.state());
         assertEquals(1, createdOrder.mutilations().size());
-        assertEquals(mutilation.getId(), createdOrder.mutilations().get(0).id());
+        assertEquals(mutilationCreate.getId(), createdOrder.mutilations().get(0).id());
     }
 
     @Test
     void testGetOrdersWithStatusWait() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        City city = cityRepository.save(new City(1L, "TestCity", "Region"));
-        Victim victim = victimRepository.save(new Victim(1L, "John", "Doe", "Workplace", "Position", "Address", "1234567890", "Description"));
-
-        Order order1 = Order.builder().user(user).city(city).victim(victim).status(OrderStatus.WAITING).deadline(LocalDate.now()).build();
-        Order order2 = Order.builder().user(user).city(city).victim(victim).status(OrderStatus.DONE).deadline(LocalDate.now()).build();
-        orderRepository.saveAll(List.of(order1, order2));
+        buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.WAITING,LocalDate.now().plusDays(5));
+        buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.DONE,LocalDate.now().plusDays(5));
 
         Page<OrderDto> waitingOrders = orderService.getOrdersWithStatusWait(0, 10);
 
@@ -117,32 +94,44 @@ class OrderServiceTest {
 
     @Test
     void testGetOrdersByUsername() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        City city = cityRepository.save(new City(1L, "TestCity", "Region"));
-        Victim victim = victimRepository.save(new Victim(1L, "John", "Doe", "Workplace", "Position", "Address", "1234567890", "Description"));
+        buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.WAITING,LocalDate.now().plusDays(5));
 
-        Order order = Order.builder().user(user).city(city).victim(victim).status(OrderStatus.WAITING).deadline(LocalDate.now()).build();
-        orderRepository.save(order);
-
-        Page<OrderDto> userOrders = orderService.getOrdersByUsername(user.getUsername(), 0, 10);
+        Page<OrderDto> userOrders = orderService.getOrdersByUsername(userCreate.getUsername(), 0, 10);
 
         assertNotNull(userOrders);
         assertEquals(1, userOrders.getTotalElements());
-        assertEquals(user.getUsername(), userOrders.getContent().get(0).username());
+        assertEquals(userCreate.getUsername(), userOrders.getContent().get(0).username());
     }
 
     @Test
     void testDeleteOrder() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        City city = cityRepository.save(new City(1L, "TestCity", "Region"));
-        Victim victim = victimRepository.save(new Victim(1L, "John", "Doe", "Workplace", "Position", "Address", "1234567890", "Description"));
+        Order order = buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.WAITING,LocalDate.now().plusDays(5));
 
-        Order order = Order.builder().user(user).city(city).victim(victim).status(OrderStatus.WAITING).deadline(LocalDate.now()).build();
-        Order savedOrder = orderRepository.save(order);
+        orderService.deleteOrder(order.getId());
 
-        orderService.deleteOrder(savedOrder.getId());
-
-        assertThrows(EntityNotFoundException.class, () -> orderRepository.findById(savedOrder.getId())
+        assertThrows(EntityNotFoundException.class, () -> orderRepository.findById(order.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Order not found")));
     }
+
+    private User buildCreateUser() {
+        return userRepository.save(User.builder().username("testUser").nick("user").telegram("@user").role(Role.CUSTOMER).build());
+    }
+
+    private City buildCreateCity() {
+        return cityRepository.save(City.builder().name("TestCity").region("Region").build());
+    }
+
+    private Victim buildCreateVictim() {
+        return victimRepository.save(Victim.builder().firstName("John").lastName("Doe").workplace("Workplace")
+                .position("Position").residence("Address").phone("1234567890").description("Description").build());
+    }
+
+    private Order buildCreateOrder(User user, City city, Victim victim, OrderStatus status, LocalDate deadline){
+        return orderRepository.save(Order.builder().user(user).city(city).victim(victim)
+                .status(status).deadline(deadline).build());
+    }
+    private Mutilation buildCreateMutilation() {
+        return mutilationRepository.save( Mutilation.builder().type("Type A").price(1000).build());
+    }
+
 }

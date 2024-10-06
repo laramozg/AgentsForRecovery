@@ -1,56 +1,26 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.example.sports.controller.fight.dto.CreateFight;
 import org.example.sports.controller.fight.dto.FightDto;
-import org.example.sports.mapper.FightMapper;
-import org.example.sports.model.Executor;
-import org.example.sports.model.Fight;
-import org.example.sports.model.Order;
-import org.example.sports.model.User;
+import org.example.sports.model.*;
 import org.example.sports.model.enums.FightStatus;
 import org.example.sports.model.enums.OrderStatus;
 import org.example.sports.model.enums.Role;
-import org.example.sports.repositore.ExecutorRepository;
-import org.example.sports.repositore.FightRepository;
-import org.example.sports.repositore.OrderRepository;
-import org.example.sports.repositore.UserRepository;
+import org.example.sports.repositore.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@Transactional
-class FightServiceTest {
-
-    @Container
-    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpassword");
-
-    @DynamicPropertySource
-    static void registerPgProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgresContainer::getUsername);
-        registry.add("spring.datasource.password", postgresContainer::getPassword);
-    }
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class FightServiceTest extends AbstractServiceTest{
 
     @Autowired
     private FightService fightService;
@@ -65,24 +35,41 @@ class FightServiceTest {
     private UserRepository userRepository;
 
     @Autowired
-    private OrderRepository orderRepository;
+    private CityRepository cityRepository;
 
     @Autowired
-    private FightMapper fightMapper;
+    private VictimRepository victimRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    private Executor executor;
+    private Order order;
 
     @BeforeEach
     void setUp() {
+        User userCustomer = buildCreateUser("testUser2", "user", "@user", Role.CUSTOMER);
+        User userExecutor = buildCreateUser("testUser1", "user", "@user", Role.EXECUTOR);
+        City city = buildCreateCity();
+        Victim victim = buildCreateVictim();
+        executor = buildCreateExecutor(userExecutor);
+        order = buildCreateOrder(userCustomer, city, victim, OrderStatus.WAITING,LocalDate.now().plusDays(5));
+
+    }
+
+    @AfterEach
+    void tearDown() {
         fightRepository.deleteAll();
         orderRepository.deleteAll();
         executorRepository.deleteAll();
         userRepository.deleteAll();
+        cityRepository.deleteAll();
+        victimRepository.deleteAll();
     }
 
     @Test
     void testGetFightsByExecutorId() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        Executor executor = executorRepository.save(new Executor("testUser", "12345", 55.5, 155.5, 0.0, 0, user));
-        Order order = orderRepository.save(new Order(1L, null, null, null, LocalDate.now(), OrderStatus.WAITING, null));
+
         Fight fight = fightRepository.save(Fight.builder()
                 .executor(executor)
                 .order(order)
@@ -98,10 +85,6 @@ class FightServiceTest {
 
     @Test
     void testCreateFight() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        Executor executor = executorRepository.save(new Executor("testUser", "12345", 55.5, 155.5, 0.0, 0, user));
-        Order order = orderRepository.save(new Order(1L, null, null, null, LocalDate.now(), OrderStatus.WAITING, null));
-
         CreateFight createFight = new CreateFight(executor.getUsername(), order.getId());
 
         FightDto createdFight = fightService.createFight(createFight);
@@ -114,9 +97,6 @@ class FightServiceTest {
 
     @Test
     void testUpdateFightStatus() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        Executor executor = executorRepository.save(new Executor("testUser", "12345", 55.5, 155.5, 0.0, 0, user));
-        Order order = orderRepository.save(new Order(1L, null, null, null, LocalDate.now(), OrderStatus.WAITING, null));
         Fight fight = fightRepository.save(Fight.builder()
                 .executor(executor)
                 .order(order)
@@ -141,9 +121,6 @@ class FightServiceTest {
 
     @Test
     void testUpdateExecutorRating() {
-        User user = userRepository.save(new User("testUser", "user", "@user", Role.EXECUTOR, null));
-        Executor executor = executorRepository.save(new Executor("testUser", "12345", 55.5, 155.5, 0.0, 0, user));
-        Order order = orderRepository.save(new Order(1L, user, null, null, LocalDate.now(), OrderStatus.WAITING, null));
         Fight fight = fightRepository.save(Fight.builder()
                 .executor(executor)
                 .order(order)
@@ -159,19 +136,57 @@ class FightServiceTest {
 
     @Test
     void testCreateFightThrowsExceptionIfExecutorNotFound() {
-        Order order = orderRepository.save(new Order(1L, null, null, null, LocalDate.now(), OrderStatus.WAITING, null));
-
         CreateFight createFight = new CreateFight("invalidExecutor", order.getId());
 
         assertThrows(EntityNotFoundException.class, () -> fightService.createFight(createFight));
     }
 
+
     @Test
-    void testCreateFightThrowsExceptionIfOrderNotFound() {
-        Executor executor = executorRepository.save(new Executor("testExecutor", "12345", 55.5, 155.5, 0.0, 0, null));
+    void testUpdateFightStatusThrowsExceptionIfFightNotFound() {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
+            fightService.updateFightStatus(999L, FightStatus.VICTORY);
+        });
 
-        CreateFight createFight = new CreateFight(executor.getUsername(), 999L);
-
-        assertThrows(EntityNotFoundException.class, () -> fightService.createFight(createFight));
+        assertEquals("Fight not found", exception.getMessage());
     }
+
+
+    @Test
+    void testUpdateFightStatusChangesOrderAndExecutorStatusToWaiting() {
+        Fight fight = Fight.builder()
+                .executor(executor)
+                .order(order)
+                .status(FightStatus.PENDING)
+                .build();
+        fightRepository.save(fight);
+
+        FightDto fightDto = fightService.updateFightStatus(fight.getId(), FightStatus.LOSS);
+
+        assertEquals(OrderStatus.WAITING, order.getStatus());
+        assertEquals(FightStatus.LOSS.toString(), fightDto.status());
+    }
+
+    private User buildCreateUser(String username, String nick, String telegram, Role role) {
+        return userRepository.save(User.builder().username(username).nick(nick).telegram(telegram).role(role).build());
+    }
+
+    private City buildCreateCity() {
+        return cityRepository.save(City.builder().name("TestCity").region("Region").build());
+    }
+
+    private Victim buildCreateVictim() {
+        return victimRepository.save(Victim.builder().firstName("John").lastName("Doe").workplace("Workplace")
+                .position("Position").residence("Address").phone("1234567890").description("Description").build());
+    }
+
+    private Order buildCreateOrder(User user, City city, Victim victim, OrderStatus status, LocalDate deadline){
+        return orderRepository.save(Order.builder().user(user).city(city).victim(victim)
+                .status(status).deadline(deadline).build());
+    }
+    private Executor buildCreateExecutor(User user) {
+        return executorRepository.save(Executor.builder().username(user.getUsername()).passportSeriesNumber("123456")
+                .weight(75.0).height(180.0).rating(0.0).completedOrders(0).user(user).build());
+    }
+
 }

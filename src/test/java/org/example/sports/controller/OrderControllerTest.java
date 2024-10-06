@@ -26,6 +26,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -78,7 +79,7 @@ class OrderControllerTest {
 
         Mockito.when(orderService.getOrdersWithStatusWait(anyInt(), anyInt())).thenReturn(orderPage);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/sports/user/order")
+        mockMvc.perform(get("/api/v1/sports/user/order")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -98,7 +99,7 @@ class OrderControllerTest {
 
         Mockito.when(orderService.getOrdersByUsername(anyString(), anyInt(), anyInt())).thenReturn(orderPage);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/sports/user/order/user123")
+        mockMvc.perform(get("/api/v1/sports/user/order/user123")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -119,5 +120,22 @@ class OrderControllerTest {
                 .andExpect(status().isNoContent());
 
         Mockito.verify(orderService, times(1)).deleteOrder(1L);
+    }
+
+    @Test
+    void testGetOrdersWithSizeGreaterThan50() throws Exception {
+
+        Page<OrderDto> mockOrders = new PageImpl<>(List.of());
+        Mockito.when(orderService.getOrdersWithStatusWait(anyInt(), anyInt()))
+                .thenReturn(mockOrders);
+
+        mockMvc.perform(get("/api/v1/sports/user/order")
+                        .param("page", "0")
+                        .param("size", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(result -> {
+                    Mockito.verify(orderService).getOrdersWithStatusWait(0, 50);
+                });
     }
 }

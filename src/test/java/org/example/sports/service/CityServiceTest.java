@@ -1,43 +1,20 @@
 package org.example.sports.service;
 
-import jakarta.transaction.Transactional;
 import org.example.sports.controller.city.dto.CityDto;
 import org.example.sports.controller.city.dto.CreateCity;
+import org.example.sports.model.City;
 import org.example.sports.repositore.CityRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.test.annotation.DirtiesContext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@Testcontainers
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@Transactional
-class CityServiceTest {
-
-    @Container
-    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpassword");
-
-    @DynamicPropertySource
-    static void registerPgProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgresContainer::getUsername);
-        registry.add("spring.datasource.password", postgresContainer::getPassword);
-    }
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class CityServiceTest extends AbstractServiceTest {
 
     @Autowired
     private CityService cityService;
@@ -45,13 +22,17 @@ class CityServiceTest {
     @Autowired
     private CityRepository cityRepository;
 
-    @BeforeEach
-    void setUp() {
+    @AfterEach
+    void tearDown() {
         cityRepository.deleteAll();
     }
 
+    private City buildCreateCity(String name, String region) {
+        return cityRepository.save(City.builder().name(name).region(region).build());
+    }
+
     @Test
-    void testCreateCity() {
+    void createCitySuccessfully() {
         CreateCity createCity = new CreateCity("New York", "New York State");
 
         CityDto createdCity = cityService.createCity(createCity);
@@ -62,9 +43,9 @@ class CityServiceTest {
     }
 
     @Test
-    void testFindAllCities() {
-        cityService.createCity(new CreateCity("Los Angeles", "California"));
-        cityService.createCity(new CreateCity("Chicago", "Illinois"));
+    void findAllCitiesSuccessfully() {
+        buildCreateCity("Los Angeles", "California");
+        buildCreateCity("Chicago", "Illinois");
 
         Page<CityDto> cities = cityService.findAllCities(0, 10);
 
@@ -73,9 +54,9 @@ class CityServiceTest {
     }
 
     @Test
-    void testCountCities() {
-        cityService.createCity(new CreateCity("Los Angeles", "California"));
-        cityService.createCity(new CreateCity("Chicago", "Illinois"));
+    void countCitiesSuccessfully() {
+        buildCreateCity("Los Angeles", "California");
+        buildCreateCity("Chicago", "Illinois");
 
         long count = cityService.countCities();
 
@@ -83,10 +64,10 @@ class CityServiceTest {
     }
 
     @Test
-    void testDeleteCity() {
-        CityDto cityDto = cityService.createCity(new CreateCity("Los Angeles", "California"));
+    void deleteCitySuccessfully() {
+        City city = buildCreateCity("Los Angeles", "California");
 
-        cityService.deleteCity(cityDto.id());
+        cityService.deleteCity(city.getId());
 
         assertEquals(0, cityService.countCities());
     }

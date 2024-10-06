@@ -5,7 +5,6 @@ import org.example.sports.controller.user.dto.CreateUserRequest;
 import org.example.sports.controller.user.dto.UpdateUserRequest;
 import org.example.sports.controller.user.dto.UserDto;
 import org.example.sports.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,17 +34,12 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
-    private CreateUserRequest createUserRequest;
-    private UserDto userDto;
-    private UpdateUserRequest updateUserRequest;
+    private final CreateUserRequest createUserRequest = new CreateUserRequest("user1","user1",
+            "@user1", "password123","EXECUTOR");
+    private final UserDto userDto = new UserDto("user1", "user1", "@user1","EXECUTOR");
+    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest("update_user1",
+            "@update_user1");
 
-    @BeforeEach
-    public void setUp() {
-        createUserRequest = new CreateUserRequest("user1","user1","@user1",
-                "password123","EXECUTOR");
-        userDto = new UserDto("user1", "user1", "@user1","EXECUTOR");
-        updateUserRequest = new UpdateUserRequest("update_user1","@update_user1");
-    }
 
     @Test
     void testCreateUser() throws Exception {
@@ -82,8 +76,8 @@ class UserControllerTest {
 
     @Test
     void testUpdateUser() throws Exception {
-        UserDto userDto1 =  new UserDto("user1", "update_user1", "@update_user1","EXECUTOR");
-        Mockito.when(userService.updateUser(eq("user1"), any(UpdateUserRequest.class))).thenReturn(userDto1);
+        UserDto userDtoUpdate = new UserDto("user1", "update_user1", "@update_user1","EXECUTOR");
+        Mockito.when(userService.updateUser(eq("user1"), any(UpdateUserRequest.class))).thenReturn(userDtoUpdate);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/sports/user/user1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -92,4 +86,5 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.nick", is("update_user1")))
                 .andExpect(jsonPath("$.telegram", is("@update_user1")));
     }
+
 }

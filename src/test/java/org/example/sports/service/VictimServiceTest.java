@@ -1,43 +1,20 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.example.sports.controller.victim.dto.CreateVictimRequest;
 import org.example.sports.controller.victim.dto.VictimDto;
+import org.example.sports.model.Victim;
 import org.example.sports.repositore.VictimRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.test.annotation.DirtiesContext;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@Transactional
-class VictimServiceTest {
-
-    @Container
-    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpassword");
-
-    @DynamicPropertySource
-    static void registerPgProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgresContainer::getUsername);
-        registry.add("spring.datasource.password", postgresContainer::getPassword);
-    }
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class VictimServiceTest extends AbstractServiceTest {
 
     @Autowired
     private VictimService victimService;
@@ -45,15 +22,22 @@ class VictimServiceTest {
     @Autowired
     private VictimRepository victimRepository;
 
-    @BeforeEach
-    void setUp() {
+    @AfterEach
+    void tearDown() {
         victimRepository.deleteAll();
     }
 
+
+    private Victim buildCreateVictim(String firstName, String lastName, String workplace, String position,
+                                     String residence, String phone, String description) {
+        return victimRepository.save(Victim.builder().firstName(firstName).lastName(lastName).workplace(workplace)
+                .position(position).residence(residence).phone(phone).description(description).build());
+    }
+
     @Test
-    void testCreateVictim() {
-        CreateVictimRequest request = new CreateVictimRequest(
-                "John", "Doe", "Company", "Manager", "New York", "555-1234", "Injured");
+    void createVictimSuccessfully() {
+        CreateVictimRequest request = new CreateVictimRequest("John", "Doe", "Company",
+                "Manager", "New York", "555-1234", "Injured");
 
         VictimDto createdVictim = victimService.createVictim(request);
 
@@ -68,12 +52,11 @@ class VictimServiceTest {
     }
 
     @Test
-    void testGetVictim() {
-        CreateVictimRequest request = new CreateVictimRequest(
-                "Jane", "Smith", "Corporation", "Engineer", "Chicago", "555-5678", "Severely Injured");
-        VictimDto createdVictim = victimService.createVictim(request);
+    void getVictimSuccessfully() {
+        Victim victim = buildCreateVictim("Jane", "Smith", "Corporation",
+                "Engineer", "Chicago", "555-5678", "Severely Injured");
 
-        VictimDto fetchedVictim = victimService.getVictim(createdVictim.id());
+        VictimDto fetchedVictim = victimService.getVictim(victim.getId());
 
         assertNotNull(fetchedVictim);
         assertEquals("Jane", fetchedVictim.firstName());
@@ -81,9 +64,11 @@ class VictimServiceTest {
     }
 
     @Test
-    void testGetAllVictims() {
-        victimService.createVictim(new CreateVictimRequest("John", "Doe", "Company", "Manager", "New York", "555-1234", "Injured"));
-        victimService.createVictim(new CreateVictimRequest("Jane", "Smith", "Corporation", "Engineer", "Chicago", "555-5678", "Severely Injured"));
+    void getAllVictimsSuccessfully() {
+        buildCreateVictim("John", "Doe", "Company",
+                "Manager", "New York", "555-1234", "Injured");
+        buildCreateVictim("Jane", "Smith", "Corporation",
+                "Engineer", "Chicago", "555-5678", "Severely Injured");
 
         Page<VictimDto> victims = victimService.getAllVictims(0, 10);
 
@@ -92,12 +77,12 @@ class VictimServiceTest {
     }
 
     @Test
-    void testDeleteVictim() {
-        VictimDto createdVictim = victimService.createVictim(new CreateVictimRequest(
-                "John", "Doe", "Company", "Manager", "New York", "555-1234", "Injured"));
+    void deleteVictimSuccessfully() {
+        Victim victim = buildCreateVictim("John", "Doe", "Company",
+                "Manager", "New York", "555-1234", "Injured");
 
-        victimService.deleteVictim(createdVictim.id());
+        victimService.deleteVictim(victim.getId());
 
-        assertThrows(EntityNotFoundException.class, () -> victimService.getVictim(createdVictim.id()));
+        assertThrows(EntityNotFoundException.class, () -> victimService.getVictim(victim.getId()));
     }
 }

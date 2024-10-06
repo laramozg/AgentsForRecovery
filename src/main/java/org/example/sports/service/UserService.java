@@ -41,7 +41,7 @@ public class UserService {
 
         user.setAuthorizationData(auth);
         if (authorizationRepository.findById(auth.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("This username" + auth.getUsername() + "is already in use.");
+            throw new IllegalArgumentException("This username " + auth.getUsername() + " is already in use.");
         }
 
         User createdUser = userRepository.save(user);
