@@ -1,23 +1,23 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.sports.controller.mutilation.dto.CreateMutilation;
-import org.example.sports.controller.mutilation.dto.MutilationDto;
+import org.example.sports.controller.mutilation.dto.MutilationRequest;
 import org.example.sports.model.Mutilation;
 import org.example.sports.repositore.MutilationRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.test.annotation.DirtiesContext;
 
-import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class MutilationServiceTest extends AbstractServiceTest {
-
+                                                                                                          
     @Autowired
     private MutilationService mutilationService;
 
@@ -42,41 +42,41 @@ class MutilationServiceTest extends AbstractServiceTest {
 
     @Test
     void createMutilationSuccessfully() {
-        MutilationDto createdMutilation = mutilationService.createMutilation(
-                new CreateMutilation("Type1", 1000));
+        Mutilation createdMutilation = mutilationService.createMutilation(
+                new MutilationRequest("Type1", 1000));
 
         assertNotNull(createdMutilation);
-        assertEquals("Type1", createdMutilation.type());
-        assertEquals(1000, createdMutilation.price());
+        assertEquals("Type1", createdMutilation.getType());
+        assertEquals(1000, createdMutilation.getPrice());
     }
 
     @Test
     void findAllMutilationsSuccessfully() {
         buildCreateMutilation("Type2", 2000);
 
-        List<MutilationDto> mutilations = mutilationService.findAllMutilations(0, 10);
+        Page<Mutilation> mutilations = mutilationService.findAllMutilations(0, 10);
 
         assertNotNull(mutilations);
-        assertEquals(2, mutilations.size());
+        assertEquals(2, mutilations.getTotalElements());
     }
 
     @Test
     void findMutilationByIdSuccessfully() {
-        MutilationDto foundMutilation = mutilationService.findMutilationById(mutilation.getId());
+        Mutilation foundMutilation = mutilationService.findMutilationById(mutilation.getId());
 
         assertNotNull(foundMutilation);
-        assertEquals("Type1", foundMutilation.type());
+        assertEquals("Type1", foundMutilation.getType());
     }
 
     @Test
     void updateMutilationSuccessfully() {
 
-        MutilationDto updatedMutilationDto = mutilationService.updateMutilation(mutilation.getId(),
-                new CreateMutilation("Type2", 2000));
+        Mutilation updatedMutilationDto = mutilationService.updateMutilation(mutilation.getId(),
+                new MutilationRequest("Type2", 2000));
 
         assertNotNull(updatedMutilationDto);
-        assertEquals("Type2", updatedMutilationDto.type());
-        assertEquals(2000, updatedMutilationDto.price());
+        assertEquals("Type2", updatedMutilationDto.getType());
+        assertEquals(2000, updatedMutilationDto.getPrice());
     }
 
     @Test
@@ -84,5 +84,16 @@ class MutilationServiceTest extends AbstractServiceTest {
         mutilationService.deleteMutilation(mutilation.getId());
 
         assertThrows(EntityNotFoundException.class, () -> mutilationService.findMutilationById(mutilation.getId()));
+    }
+
+    @Test
+    void testFindAllMutilationsById_Success() {
+        Mutilation mutilation1 = mutilationRepository.save(Mutilation.builder().type("Type1").price(1000).build());
+        Mutilation mutilation2 = mutilationRepository.save(Mutilation.builder().type("Type2").price(2000).build());
+
+        Set<Long> ids = Set.of(mutilation1.getId(), mutilation2.getId());
+        Set<Mutilation> mutilations = mutilationService.findAllMutilationsById(ids);
+
+        assertEquals(2, mutilations.size());
     }
 }

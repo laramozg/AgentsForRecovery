@@ -2,8 +2,10 @@ package org.example.sports.controller.mutilation;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.sports.controller.mutilation.dto.CreateMutilation;
+import org.example.sports.controller.mutilation.dto.MutilationRequest;
 import org.example.sports.controller.mutilation.dto.MutilationDto;
+import org.example.sports.mapper.MutilationMapper;
+import org.example.sports.model.Mutilation;
 import org.example.sports.service.MutilationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +18,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MutilationController {
     private final MutilationService mutilationService;
+    private final MutilationMapper mutilationMapper;
 
     @PostMapping("/change")
-    public ResponseEntity<MutilationDto> createMutilation(@Valid @RequestBody CreateMutilation createMutilation) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(mutilationService.createMutilation(createMutilation));
+    public ResponseEntity<MutilationDto> createMutilation(
+            @Valid @RequestBody MutilationRequest mutilationRequest) {
+        Mutilation mutilation = mutilationService.createMutilation(mutilationRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mutilationMapper.convertToDto(mutilation));
     }
 
     @GetMapping
@@ -29,19 +34,21 @@ public class MutilationController {
         if (size > 50) {
             size = 50;
         }
-        List<MutilationDto> mutilations = mutilationService.findAllMutilations(page, size);
+        List<MutilationDto> mutilations = mutilationService.findAllMutilations(page, size).stream()
+                .map(mutilationMapper::convertToDto)
+                .toList();
         return ResponseEntity.ok(mutilations);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<MutilationDto> getMutilationById(@PathVariable Long id) {
-        MutilationDto mutilationDto = mutilationService.findMutilationById(id);
+        MutilationDto mutilationDto = mutilationMapper.convertToDto(mutilationService.findMutilationById(id));
         return ResponseEntity.ok(mutilationDto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MutilationDto> updateMutilation(@PathVariable Long id, @RequestBody CreateMutilation mutilationDto) {
-        return ResponseEntity.ok(mutilationService.updateMutilation(id, mutilationDto));
+    public ResponseEntity<MutilationDto> updateMutilation(@PathVariable Long id, @RequestBody MutilationRequest mutilationDto) {
+        return ResponseEntity.ok(mutilationMapper.convertToDto(mutilationService.updateMutilation(id, mutilationDto)));
     }
 
     @DeleteMapping("/change/{id}")

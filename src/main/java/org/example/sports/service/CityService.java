@@ -1,9 +1,8 @@
 package org.example.sports.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.example.sports.controller.city.dto.CityDto;
 import org.example.sports.controller.city.dto.CreateCity;
-import org.example.sports.mapper.CityMapper;
 import org.example.sports.model.City;
 import org.example.sports.repositore.CityRepository;
 import org.springframework.data.domain.Page;
@@ -16,22 +15,24 @@ import org.springframework.stereotype.Service;
 public class CityService {
 
     private final CityRepository cityRepository;
-    private final CityMapper cityMapper;
 
-    public CityDto createCity(CreateCity cityDto) {
+    public City createCity(CreateCity cityDto) {
         City city = City.builder()
                 .name(cityDto.name())
                 .region(cityDto.region())
                 .build();
 
-        City sreatedCity = cityRepository.save(city);
-        return cityMapper.toDto(sreatedCity);
+        return cityRepository.save(city);
     }
 
-    public Page<CityDto> findAllCities(int page, int size) {
+    public Page<City> findAllCities(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return cityRepository.findAll(pageable)
-                .map(cityMapper::toDto);
+        return cityRepository.findAll(pageable);
+    }
+
+    public City getCityById(Long id) {
+        return cityRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("City not found"));
     }
 
     public long countCities() {

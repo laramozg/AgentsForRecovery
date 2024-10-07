@@ -3,11 +3,12 @@ package org.example.sports.service;
 import jakarta.persistence.EntityNotFoundException;
 import org.example.sports.controller.user.dto.CreateUserRequest;
 import org.example.sports.controller.user.dto.UpdateUserRequest;
-import org.example.sports.controller.user.dto.UserDto;
 import org.example.sports.model.User;
 import org.example.sports.model.enums.Role;
 import org.example.sports.repositore.UserRepository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -39,37 +40,37 @@ class UserServiceTest extends AbstractServiceTest{
     @Test
     void createUserSuccessfully() {
         CreateUserRequest createUserRequest = new CreateUserRequest("user1", "user1", "@user1", "USER_PASSWORD", "EXECUTOR");
-        UserDto createdUser = userService.createUser(createUserRequest);
+        User createdUser = userService.createUser(createUserRequest);
 
         assertNotNull(createdUser);
-        assertEquals("user1", createdUser.username());
-        assertEquals("user1", createdUser.nick());
-        assertEquals("@user1", createdUser.telegram());
+        assertEquals("user1", createdUser.getUsername());
+        assertEquals("user1", createdUser.getNick());
+        assertEquals("@user1", createdUser.getTelegram());
     }
 
     @Test
     void getUserSuccessfully() {
-        UserDto fetchedUser = userService.getUser("john");
+        User fetchedUser = userService.getUserById("john");
 
         assertNotNull(fetchedUser);
-        assertEquals("john", fetchedUser.username());
+        assertEquals("john", fetchedUser.getUsername());
     }
 
     @Test
     void deleteUserSuccessfully() {
         userService.deleteUser("john");
 
-        assertThrows(EntityNotFoundException.class, () -> userService.getUser("john"));
+        assertThrows(EntityNotFoundException.class, () -> userService.getUserById("john"));
     }
 
     @Test
     void updateUserSuccessfully() {
         UpdateUserRequest updateUserRequest = new UpdateUserRequest("Alice Updated", "alice_telegram_updated");
 
-        UserDto updatedUser = userService.updateUser("john", updateUserRequest);
+        User updatedUser = userService.updateUser("john", updateUserRequest);
 
-        assertEquals("Alice Updated", updatedUser.nick());
-        assertEquals("alice_telegram_updated", updatedUser.telegram());
+        assertEquals("Alice Updated", updatedUser.getNick());
+        assertEquals("alice_telegram_updated", updatedUser.getTelegram());
     }
 
     @Test
@@ -87,7 +88,7 @@ class UserServiceTest extends AbstractServiceTest{
     @Test
     void throwExceptionWhenUserNotFound() {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            userService.getUser("nonExistentUser");
+            userService.getUserById("nonExistentUser");
         });
 
         assertEquals("User with username 'nonExistentUser' not found", exception.getMessage());

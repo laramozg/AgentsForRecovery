@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
 
-    public UserDto toDto(User user) {
+    public UserDto convertToDto(User user) {
         return new UserDto(
                 user.getUsername(),
                 user.getNick(),

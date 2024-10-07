@@ -1,6 +1,5 @@
 package org.example.sports.service;
 
-import org.example.sports.controller.city.dto.CityDto;
 import org.example.sports.controller.city.dto.CreateCity;
 import org.example.sports.model.City;
 import org.example.sports.repositore.CityRepository;
@@ -35,11 +34,11 @@ class CityServiceTest extends AbstractServiceTest {
     void createCitySuccessfully() {
         CreateCity createCity = new CreateCity("New York", "New York State");
 
-        CityDto createdCity = cityService.createCity(createCity);
+        City createdCity = cityService.createCity(createCity);
 
         assertNotNull(createdCity);
-        assertEquals("New York", createdCity.name());
-        assertEquals("New York State", createdCity.region());
+        assertEquals("New York", createdCity.getName());
+        assertEquals("New York State", createdCity.getRegion());
     }
 
     @Test
@@ -47,7 +46,7 @@ class CityServiceTest extends AbstractServiceTest {
         buildCreateCity("Los Angeles", "California");
         buildCreateCity("Chicago", "Illinois");
 
-        Page<CityDto> cities = cityService.findAllCities(0, 10);
+        Page<City> cities = cityService.findAllCities(0, 10);
 
         assertNotNull(cities);
         assertEquals(2, cities.getTotalElements());

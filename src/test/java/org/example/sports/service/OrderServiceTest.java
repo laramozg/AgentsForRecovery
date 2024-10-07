@@ -1,8 +1,6 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.sports.controller.order.dto.CreateOrderRequest;
-import org.example.sports.controller.order.dto.OrderDto;
 import org.example.sports.model.*;
 import org.example.sports.model.enums.OrderStatus;
 import org.example.sports.model.enums.Role;
@@ -15,15 +13,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class OrderServiceTest extends AbstractServiceTest{
+class OrderServiceTest extends AbstractServiceTest {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private ExecutorRepository executorRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -33,12 +36,6 @@ class OrderServiceTest extends AbstractServiceTest{
 
     @Autowired
     private VictimRepository victimRepository;
-
-    @Autowired
-    private MutilationRepository mutilationRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
 
     private User userCreate;
     private City cityCreate;
@@ -54,63 +51,66 @@ class OrderServiceTest extends AbstractServiceTest{
     @AfterEach
     void tearDown() {
         orderRepository.deleteAll();
+        executorRepository.deleteAll();
         userRepository.deleteAll();
         cityRepository.deleteAll();
         victimRepository.deleteAll();
-        mutilationRepository.deleteAll();
     }
 
     @Test
-    void testCreateOrder() {
-        Mutilation mutilationCreate = buildCreateMutilation();
+    void testCreateOrderSuccess() {
+        Order order = Order.builder().user(userCreate).city(cityCreate).victim(victimCreate)
+                .deadline(LocalDate.now().plusDays(5)).mutilations(null).build();
 
-        CreateOrderRequest request = new CreateOrderRequest(
-                userCreate.getUsername(),
-                cityCreate.getId(),
-                victimCreate.getId(),
-                LocalDate.now().plusDays(5),
-                List.of(mutilationCreate.getId())
-        );
-
-        OrderDto createdOrder = orderService.createOrder(request);
+        Order createdOrder = orderService.createOrder(order);
 
         assertNotNull(createdOrder);
-        assertEquals(OrderStatus.WAITING.toString(), createdOrder.state());
-        assertEquals(1, createdOrder.mutilations().size());
-        assertEquals(mutilationCreate.getId(), createdOrder.mutilations().get(0).id());
+        assertEquals(OrderStatus.WAITING, createdOrder.getStatus());
+
     }
 
     @Test
-    void testGetOrdersWithStatusWait() {
+    void testGetOrdersWithStatusWaitByIdSuccess() {
         buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.WAITING,LocalDate.now().plusDays(5));
         buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.DONE,LocalDate.now().plusDays(5));
 
-        Page<OrderDto> waitingOrders = orderService.getOrdersWithStatusWait(0, 10);
+        Page<Order> waitingOrders = orderService.getOrdersWithStatusWait(0, 10);
 
         assertNotNull(waitingOrders);
         assertEquals(1, waitingOrders.getTotalElements());
-        assertEquals(OrderStatus.WAITING.toString(), waitingOrders.getContent().get(0).state());
+        assertEquals(OrderStatus.WAITING, waitingOrders.getContent().get(0).getStatus());
     }
 
     @Test
-    void testGetOrdersByUsername() {
+    void testGetOrdersByUsernameByIdSuccess() {
         buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.WAITING,LocalDate.now().plusDays(5));
 
-        Page<OrderDto> userOrders = orderService.getOrdersByUsername(userCreate.getUsername(), 0, 10);
+        Page<Order> userOrders = orderService.getOrdersByUsername(userCreate.getUsername(), 0, 10);
 
         assertNotNull(userOrders);
         assertEquals(1, userOrders.getTotalElements());
-        assertEquals(userCreate.getUsername(), userOrders.getContent().get(0).username());
+        assertEquals(userCreate.getUsername(), userOrders.getContent().get(0).getUser().getUsername());
     }
 
     @Test
-    void testDeleteOrder() {
+    void testDeleteOrderSuccess() {
         Order order = buildCreateOrder(userCreate,cityCreate,victimCreate,OrderStatus.WAITING,LocalDate.now().plusDays(5));
 
         orderService.deleteOrder(order.getId());
 
         assertThrows(EntityNotFoundException.class, () -> orderRepository.findById(order.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Order not found")));
+    }
+
+    @Test
+    void testGetOrderById_NotFound() {
+        assertThrows(EntityNotFoundException.class, () -> orderService.getOrderById(999L));
+    }
+
+
+    private Executor buildCreateExecutor(User user) {
+        return executorRepository.save(Executor.builder().username(user.getUsername()).passportSeriesNumber("123456")
+                .weight(75.0).height(180.0).rating(0.0).completedOrders(0).user(user).build());
     }
 
     private User buildCreateUser() {
@@ -129,9 +129,6 @@ class OrderServiceTest extends AbstractServiceTest{
     private Order buildCreateOrder(User user, City city, Victim victim, OrderStatus status, LocalDate deadline){
         return orderRepository.save(Order.builder().user(user).city(city).victim(victim)
                 .status(status).deadline(deadline).build());
-    }
-    private Mutilation buildCreateMutilation() {
-        return mutilationRepository.save( Mutilation.builder().type("Type A").price(1000).build());
     }
 
 }

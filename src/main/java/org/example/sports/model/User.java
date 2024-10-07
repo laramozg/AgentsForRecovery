@@ -1,7 +1,10 @@
 package org.example.sports.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.example.sports.model.enums.Role;
 
 @Data
@@ -18,9 +21,11 @@ public class User {
     private String nick;
     @Column(nullable = false)
     private String telegram;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AuthorizationData authorizationData;
 }

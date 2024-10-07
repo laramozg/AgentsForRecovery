@@ -1,24 +1,27 @@
 package org.example.sports.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.sports.controller.mutilation.dto.CreateMutilation;
-import org.example.sports.controller.mutilation.dto.MutilationDto;
+import org.example.sports.controller.mutilation.dto.MutilationRequest;
+import org.example.sports.model.Mutilation;
 import org.example.sports.service.MutilationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.Collections;
-import java.util.List;
+
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,34 +38,34 @@ class MutilationControllerTest {
     @MockBean
     private MutilationService mutilationService;
 
-    private CreateMutilation createMutilation;
-    private MutilationDto mutilationDto;
+    private MutilationRequest mutilationRequest;
+    private Mutilation mutilation;
 
     @BeforeEach
     void setUp() {
-        createMutilation = new CreateMutilation("description", 10000);
-        mutilationDto = new MutilationDto(1L, "description", 10000);
+        mutilationRequest = new MutilationRequest("description", 10000);
+        mutilation = new Mutilation(1L, "description", 10000, null);
     }
 
     @Test
-    void testCreateMutilation() throws Exception {
-        Mockito.when(mutilationService.createMutilation(any(CreateMutilation.class))).thenReturn(mutilationDto);
+    void testCreateMutilationSuccess() throws Exception {
+        when(mutilationService.createMutilation(any(MutilationRequest.class))).thenReturn(mutilation);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/sports/user/mutilation/change")
+        mockMvc.perform(post("/api/v1/sports/user/mutilation/change")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createMutilation)))
+                        .content(objectMapper.writeValueAsString(mutilationRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.type", is("description")))
                 .andExpect(jsonPath("$.price", is(10000)));
     }
 
     @Test
-    void testGetAllMutilations() throws Exception {
-        List<MutilationDto> mutilationDtos = Collections.singletonList(mutilationDto);
+    void testGetAllMutilationsSuccess() throws Exception {
+        Page<Mutilation> mutilationDtos = new PageImpl<>(Collections.singletonList(mutilation));
 
-        Mockito.when(mutilationService.findAllMutilations(anyInt(), anyInt())).thenReturn(mutilationDtos);
+        when(mutilationService.findAllMutilations(anyInt(), anyInt())).thenReturn(mutilationDtos);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/sports/user/mutilation")
+        mockMvc.perform(get("/api/v1/sports/user/mutilation")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -71,24 +74,34 @@ class MutilationControllerTest {
     }
 
     @Test
-    void testGetMutilationById() throws Exception {
-        Mockito.when(mutilationService.findMutilationById(1L)).thenReturn(mutilationDto);
+    void testGetMutilationByIdSuccess() throws Exception {
+        when(mutilationService.findMutilationById(1L)).thenReturn(mutilation);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/sports/user/mutilation/1"))
+        mockMvc.perform(get("/api/v1/sports/user/mutilation/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type", is("description")))
                 .andExpect(jsonPath("$.price", is(10000)));
     }
 
     @Test
-    void testUpdateMutilation() throws Exception {
-        Mockito.when(mutilationService.updateMutilation(eq(1L), any(CreateMutilation.class))).thenReturn(mutilationDto);
+    void testUpdateMutilationSuccess() throws Exception {
+        when(mutilationService.updateMutilation(eq(1L), any(MutilationRequest.class))).thenReturn(mutilation);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/sports/user/mutilation/1")
+        mockMvc.perform(put("/api/v1/sports/user/mutilation/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createMutilation)))
+                        .content(objectMapper.writeValueAsString(mutilationRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type", is("description")))
                 .andExpect(jsonPath("$.price", is(10000)));
+    }
+
+    @Test
+    void testDeleteMutilationSuccess() throws Exception {
+        doNothing().when(mutilationService).deleteMutilation(1L);
+
+        mockMvc.perform(delete("/api/v1/sports/user/mutilation/change/1"))
+                .andExpect(status().isNoContent());
+
+        verify(mutilationService, times(1)).deleteMutilation(1L);
     }
 }

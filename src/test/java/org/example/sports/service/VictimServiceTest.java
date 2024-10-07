@@ -2,7 +2,6 @@ package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.example.sports.controller.victim.dto.CreateVictimRequest;
-import org.example.sports.controller.victim.dto.VictimDto;
 import org.example.sports.model.Victim;
 import org.example.sports.repositore.VictimRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -39,16 +38,16 @@ class VictimServiceTest extends AbstractServiceTest {
         CreateVictimRequest request = new CreateVictimRequest("John", "Doe", "Company",
                 "Manager", "New York", "555-1234", "Injured");
 
-        VictimDto createdVictim = victimService.createVictim(request);
+        Victim createdVictim = victimService.createVictim(request);
 
         assertNotNull(createdVictim);
-        assertEquals("John", createdVictim.firstName());
-        assertEquals("Doe", createdVictim.lastName());
-        assertEquals("Company", createdVictim.workplace());
-        assertEquals("Manager", createdVictim.position());
-        assertEquals("New York", createdVictim.residence());
-        assertEquals("555-1234", createdVictim.phone());
-        assertEquals("Injured", createdVictim.description());
+        assertEquals("John", createdVictim.getFirstName());
+        assertEquals("Doe", createdVictim.getLastName());
+        assertEquals("Company", createdVictim.getWorkplace());
+        assertEquals("Manager", createdVictim.getPosition());
+        assertEquals("New York", createdVictim.getResidence());
+        assertEquals("555-1234", createdVictim.getPhone());
+        assertEquals("Injured", createdVictim.getDescription());
     }
 
     @Test
@@ -56,11 +55,11 @@ class VictimServiceTest extends AbstractServiceTest {
         Victim victim = buildCreateVictim("Jane", "Smith", "Corporation",
                 "Engineer", "Chicago", "555-5678", "Severely Injured");
 
-        VictimDto fetchedVictim = victimService.getVictim(victim.getId());
+        Victim fetchedVictim = victimService.getVictimById(victim.getId());
 
         assertNotNull(fetchedVictim);
-        assertEquals("Jane", fetchedVictim.firstName());
-        assertEquals("Smith", fetchedVictim.lastName());
+        assertEquals("Jane", fetchedVictim.getFirstName());
+        assertEquals("Smith", fetchedVictim.getLastName());
     }
 
     @Test
@@ -70,7 +69,7 @@ class VictimServiceTest extends AbstractServiceTest {
         buildCreateVictim("Jane", "Smith", "Corporation",
                 "Engineer", "Chicago", "555-5678", "Severely Injured");
 
-        Page<VictimDto> victims = victimService.getAllVictims(0, 10);
+        Page<Victim> victims = victimService.getAllVictims(0, 10);
 
         assertNotNull(victims);
         assertEquals(2, victims.getTotalElements());
@@ -83,6 +82,6 @@ class VictimServiceTest extends AbstractServiceTest {
 
         victimService.deleteVictim(victim.getId());
 
-        assertThrows(EntityNotFoundException.class, () -> victimService.getVictim(victim.getId()));
+        assertThrows(EntityNotFoundException.class, () -> victimService.getVictimById(victim.getId()));
     }
 }

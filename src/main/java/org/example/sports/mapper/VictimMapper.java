@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class VictimMapper {
 
-    public VictimDto toDto(Victim victim) {
+    public VictimDto convertToDto(Victim victim) {
         return new VictimDto(
                 victim.getId(),
                 victim.getFirstName(),

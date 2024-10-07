@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MutilationMapper {
 
-    public MutilationDto toDto(Mutilation mutilation) {
+    public MutilationDto convertToDto(Mutilation mutilation) {
         return new MutilationDto(
                 mutilation.getId(),
                 mutilation.getType(),

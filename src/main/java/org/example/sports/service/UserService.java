@@ -5,8 +5,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.user.dto.CreateUserRequest;
 import org.example.sports.controller.user.dto.UpdateUserRequest;
-import org.example.sports.controller.user.dto.UserDto;
-import org.example.sports.mapper.UserMapper;
 import org.example.sports.model.AuthorizationData;
 import org.example.sports.model.User;
 import org.example.sports.model.enums.Role;
@@ -22,10 +20,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final AuthorizationRepository authorizationRepository;
     private final PasswordEncoder passwordEncoder;
-    private final UserMapper userMapper;
 
     @Transactional
-    public UserDto createUser(CreateUserRequest userDto) {
+    public User createUser(CreateUserRequest userDto) {
         User user = User.builder()
                 .username(userDto.username())
                 .nick(userDto.nick())
@@ -47,12 +44,11 @@ public class UserService {
         User createdUser = userRepository.save(user);
         authorizationRepository.save(auth);
 
-        return userMapper.toDto(createdUser);
+        return createdUser;
     }
 
-    public UserDto getUser(String username) {
+    public User getUserById(String username) {
         return userRepository.findById(username)
-                .map(userMapper::toDto)
                 .orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' not found"));
     }
 
@@ -64,15 +60,14 @@ public class UserService {
         userRepository.deleteById(username);
     }
 
-    public UserDto updateUser(String username, UpdateUserRequest updateUserRequest) {
+    public User updateUser(String username, UpdateUserRequest updateUserRequest) {
         User user = userRepository.findById(username)
                 .orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' not found"));
 
 
         user.setNick(updateUserRequest.nick());
         user.setTelegram(updateUserRequest.telegram());
-        User updatedUser = userRepository.save(user);
-        return userMapper.toDto(updatedUser);
+        return userRepository.save(user);
     }
 
 

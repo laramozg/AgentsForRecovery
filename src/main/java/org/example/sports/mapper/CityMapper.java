@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CityMapper {
-    public CityDto toDto(City city) {
+    public CityDto convertToDto(City city) {
         return new CityDto(
                 city.getId(),
                 city.getName(),

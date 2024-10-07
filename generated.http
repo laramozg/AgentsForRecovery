@@ -2,11 +2,11 @@
 #Content-Type: application/json
 #
 #{
-#  "username": "user2",
-#  "nick": "user2",
-#  "telegram": "@user2",
-#  "password": "user_password2",
-#  "role": "CUSTOMER"
+#  "username": "user3",
+#  "nick": "user3",
+#  "telegram": "@user3",
+#  "password": "user_password3",
+#  "role": "EXECUTOR"
 #}
 ###
 
@@ -15,7 +15,7 @@
 #Content-Type: application/json
 
 ###
-# Создать исполнителя
+#Создать исполнителя
 #POST http://localhost:8080/api/v1/sports/user/executor
 #Content-Type: application/json
 #
@@ -35,7 +35,7 @@
 ###
 
 # Обновить данные исполнителя
-#PUT http://localhost:8080/api/v1/sports/user/executor/user3
+#PUT http://localhost:8080/api/v1/sports/user/executor
 #Content-Type: application/json
 #
 #{

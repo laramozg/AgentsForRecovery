@@ -3,8 +3,6 @@ package org.example.sports.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.victim.dto.CreateVictimRequest;
-import org.example.sports.controller.victim.dto.VictimDto;
-import org.example.sports.mapper.VictimMapper;
 import org.example.sports.model.Victim;
 import org.example.sports.repositore.VictimRepository;
 import org.springframework.data.domain.Page;
@@ -17,9 +15,8 @@ import org.springframework.stereotype.Service;
 public class VictimService {
 
     private final VictimRepository victimRepository;
-    private final VictimMapper victimMapper;
 
-    public VictimDto createVictim(CreateVictimRequest request) {
+    public Victim createVictim(CreateVictimRequest request) {
         Victim victim = Victim.builder()
                 .firstName(request.firstName())
                 .lastName(request.lastName())
@@ -30,20 +27,17 @@ public class VictimService {
                 .description(request.description())
                 .build();
 
-        Victim savedVictim = victimRepository.save(victim);
-        return victimMapper.toDto(savedVictim);
+        return victimRepository.save(victim);
     }
 
-    public VictimDto getVictim(Long id) {
+    public Victim getVictimById(Long id) {
         return victimRepository.findById(id)
-                .map(victimMapper::toDto)
                 .orElseThrow(() -> new EntityNotFoundException("Victim not found"));
     }
 
-    public Page<VictimDto> getAllVictims(int page, int size) {
+    public Page<Victim> getAllVictims(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Victim> victims = victimRepository.findAll(pageable);
-        return victims.map(victimMapper::toDto);
+        return victimRepository.findAll(pageable);
     }
 
     public void deleteVictim(Long id) {

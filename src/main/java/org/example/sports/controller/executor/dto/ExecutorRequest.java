@@ -10,3 +10,4 @@ public record ExecutorRequest(
         @NotNull Double height
 ) {
 }
+

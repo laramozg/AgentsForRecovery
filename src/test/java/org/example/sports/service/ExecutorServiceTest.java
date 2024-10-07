@@ -1,6 +1,5 @@
 package org.example.sports.service;
 
-import org.example.sports.controller.executor.dto.ExecutorDto;
 import org.example.sports.controller.executor.dto.ExecutorRequest;
 import org.example.sports.model.Executor;
 import org.example.sports.model.User;
@@ -45,19 +44,18 @@ class ExecutorServiceTest extends AbstractServiceTest {
 
     @Test
     void createExecutorSuccessfully() {
-        buildCreateUser();
-        ExecutorRequest executorRequest = new ExecutorRequest("john", "123456", 75.0, 180.0);
-        ExecutorDto createdExecutor = executorService.createExecutor(executorRequest);
+        Executor executor = new Executor("john", "123456", 75.0, 180.0,0.0,0,buildCreateUser());
+        Executor createdExecutor = executorService.createExecutor(executor);
 
         assertNotNull(createdExecutor);
         assertExecutorDetails(createdExecutor, "john", "123456", 75.0, 180.0, 0.0, 0);
     }
 
     @Test
-    void getExecutorSuccessfully() {
+    void getExecutorByIdSuccessfully() {
         buildCreateExecutor(buildCreateUser());
 
-        ExecutorDto fetchedExecutor = executorService.getUser("john");
+        Executor fetchedExecutor = executorService.getExecutorById("john");
 
         assertNotNull(fetchedExecutor);
         assertExecutorDetails(fetchedExecutor, "john", "123456", 75.0, 180.0, 0.0, 0);
@@ -68,20 +66,20 @@ class ExecutorServiceTest extends AbstractServiceTest {
         buildCreateExecutor(buildCreateUser());
 
         ExecutorRequest updateRequest = new ExecutorRequest("john", "654321", 80.0, 185.0);
-        ExecutorDto updatedExecutor = executorService.updateUser("john", updateRequest);
+        Executor updatedExecutor = executorService.updateExecutor(updateRequest);
 
         assertNotNull(updatedExecutor);
         assertExecutorDetails(updatedExecutor, "john", "654321", 80.0, 185.0, 0.0, 0);
     }
 
 
-    private void assertExecutorDetails(ExecutorDto executor, String expectedUsername, String expectedPassportNumber,
+    private void assertExecutorDetails(Executor executor, String expectedUsername, String expectedPassportNumber,
                                        double expectedWeight, double expectedHeight, double expectedRating, int expectedCompletedOrders) {
-        assertEquals(expectedUsername, executor.username());
-        assertEquals(expectedPassportNumber, executor.passportSeriesNumber());
-        assertEquals(expectedWeight, executor.weight());
-        assertEquals(expectedHeight, executor.height());
-        assertEquals(expectedRating, executor.rating());
-        assertEquals(expectedCompletedOrders, executor.completedOrders());
+        assertEquals(expectedUsername, executor.getUsername());
+        assertEquals(expectedPassportNumber, executor.getPassportSeriesNumber());
+        assertEquals(expectedWeight, executor.getWeight());
+        assertEquals(expectedHeight, executor.getHeight());
+        assertEquals(expectedRating, executor.getRating());
+        assertEquals(expectedCompletedOrders, executor.getCompletedOrders());
     }
 }

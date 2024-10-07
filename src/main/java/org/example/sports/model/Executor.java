@@ -32,6 +32,7 @@ public class Executor {
     private Integer completedOrders;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @MapsId
     @JoinColumn(name = "username", referencedColumnName = "username")
     private User user;
 }

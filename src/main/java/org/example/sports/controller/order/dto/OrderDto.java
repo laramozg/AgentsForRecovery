@@ -3,7 +3,7 @@ package org.example.sports.controller.order.dto;
 import org.example.sports.controller.mutilation.dto.MutilationDto;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Set;
 
 public record OrderDto(
         Long id,
@@ -12,6 +12,6 @@ public record OrderDto(
         Long victimId,
         LocalDate deadline,
         String state,
-        List<MutilationDto> mutilations
+        Set<MutilationDto> mutilations
 ) {
 }

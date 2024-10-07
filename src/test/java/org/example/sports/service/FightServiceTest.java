@@ -1,8 +1,6 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.sports.controller.fight.dto.CreateFight;
-import org.example.sports.controller.fight.dto.FightDto;
 import org.example.sports.model.*;
 import org.example.sports.model.enums.FightStatus;
 import org.example.sports.model.enums.OrderStatus;
@@ -20,7 +18,7 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class FightServiceTest extends AbstractServiceTest{
+class FightServiceTest extends AbstractServiceTest {
 
     @Autowired
     private FightService fightService;
@@ -53,7 +51,7 @@ class FightServiceTest extends AbstractServiceTest{
         City city = buildCreateCity();
         Victim victim = buildCreateVictim();
         executor = buildCreateExecutor(userExecutor);
-        order = buildCreateOrder(userCustomer, city, victim, OrderStatus.WAITING,LocalDate.now().plusDays(5));
+        order = buildCreateOrder(userCustomer, city, victim, OrderStatus.WAITING, LocalDate.now().plusDays(5));
 
     }
 
@@ -76,23 +74,26 @@ class FightServiceTest extends AbstractServiceTest{
                 .status(FightStatus.PENDING)
                 .build());
 
-        Page<FightDto> fights = fightService.getFightsByExecutorId(executor.getUsername(), 0, 10);
+        Page<Fight> fights = fightService.getFightsByExecutorId(executor.getUsername(), 0, 10);
 
         assertNotNull(fights);
         assertEquals(1, fights.getTotalElements());
-        assertEquals(fight.getId(), fights.getContent().get(0).id());
+        assertEquals(fight.getId(), fights.getContent().get(0).getId());
     }
 
     @Test
     void testCreateFight() {
-        CreateFight createFight = new CreateFight(executor.getUsername(), order.getId());
-
-        FightDto createdFight = fightService.createFight(createFight);
+        Fight createFight = Fight.builder()
+                .executor(executor)
+                .order(order)
+                .status(FightStatus.PENDING)
+                .build();
+        Fight createdFight = fightService.createFight(createFight);
 
         assertNotNull(createdFight);
-        assertEquals(FightStatus.PENDING.toString(), createdFight.status());
-        assertEquals(executor.getUsername(), createdFight.executorId());
-        assertEquals(order.getId(), createdFight.orderId());
+        assertEquals(FightStatus.PENDING, createdFight.getStatus());
+        assertEquals(executor.getUsername(), createdFight.getExecutor().getUsername());
+        assertEquals(order.getId(), createdFight.getOrder().getId());
     }
 
     @Test
@@ -103,10 +104,10 @@ class FightServiceTest extends AbstractServiceTest{
                 .status(FightStatus.PENDING)
                 .build());
 
-        FightDto updatedFight = fightService.updateFightStatus(fight.getId(), FightStatus.VICTORY);
+        Fight updatedFight = fightService.updateFightStatus(fight.getId(), FightStatus.VICTORY);
 
         assertNotNull(updatedFight);
-        assertEquals(FightStatus.VICTORY.toString(), updatedFight.status());
+        assertEquals(FightStatus.VICTORY, updatedFight.getStatus());
 
         Order updatedOrder = orderRepository.findById(order.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
@@ -134,13 +135,6 @@ class FightServiceTest extends AbstractServiceTest{
         assertEquals(10.0, updatedExecutor.getRating());
     }
 
-    @Test
-    void testCreateFightThrowsExceptionIfExecutorNotFound() {
-        CreateFight createFight = new CreateFight("invalidExecutor", order.getId());
-
-        assertThrows(EntityNotFoundException.class, () -> fightService.createFight(createFight));
-    }
-
 
     @Test
     void testUpdateFightStatusThrowsExceptionIfFightNotFound() {
@@ -161,10 +155,10 @@ class FightServiceTest extends AbstractServiceTest{
                 .build();
         fightRepository.save(fight);
 
-        FightDto fightDto = fightService.updateFightStatus(fight.getId(), FightStatus.LOSS);
+        Fight fightDto = fightService.updateFightStatus(fight.getId(), FightStatus.LOSS);
 
         assertEquals(OrderStatus.WAITING, order.getStatus());
-        assertEquals(FightStatus.LOSS.toString(), fightDto.status());
+        assertEquals(FightStatus.LOSS, fightDto.getStatus());
     }
 
     private User buildCreateUser(String username, String nick, String telegram, Role role) {
@@ -180,10 +174,11 @@ class FightServiceTest extends AbstractServiceTest{
                 .position("Position").residence("Address").phone("1234567890").description("Description").build());
     }
 
-    private Order buildCreateOrder(User user, City city, Victim victim, OrderStatus status, LocalDate deadline){
+    private Order buildCreateOrder(User user, City city, Victim victim, OrderStatus status, LocalDate deadline) {
         return orderRepository.save(Order.builder().user(user).city(city).victim(victim)
                 .status(status).deadline(deadline).build());
     }
+
     private Executor buildCreateExecutor(User user) {
         return executorRepository.save(Executor.builder().username(user.getUsername()).passportSeriesNumber("123456")
                 .weight(75.0).height(180.0).rating(0.0).completedOrders(0).user(user).build());

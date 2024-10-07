@@ -3,11 +3,14 @@ package org.example.sports.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.sports.controller.fight.dto.CreateFight;
 import org.example.sports.controller.fight.dto.FightDto;
+import org.example.sports.mapper.FightMapper;
+import org.example.sports.model.Executor;
+import org.example.sports.model.Fight;
+import org.example.sports.model.Order;
 import org.example.sports.model.enums.FightStatus;
 import org.example.sports.service.FightService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,13 +19,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,23 +43,31 @@ class FightControllerTest {
     @MockBean
     private FightService fightService;
 
+    @MockBean
+    private FightMapper fightMapper;
+
     private CreateFight createFight;
     private FightDto fightDto;
+    private Fight fight;
 
     @BeforeEach
     void setUp() {
         fightDto = new FightDto(1L, "user1", 1L, "PENDING");
         createFight = new CreateFight("user1", 1L);
+        fight = Fight.builder().id(1L).order(Order.builder().id(1L).build()).executor(Executor.builder()
+                        .username("user1").build())
+                .status(FightStatus.PENDING).build();
     }
 
     @Test
-    void testGetFightsByExecutorId() throws Exception {
-        List<FightDto> fights = List.of(fightDto);
-        Page<FightDto> fightPage = new PageImpl<>(fights);
+    void testGetFightsByExecutorIdSuccess() throws Exception {
+        List<Fight> fights = List.of(fight);
+        Page<Fight> fightPage = new PageImpl<>(fights);
 
-        Mockito.when(fightService.getFightsByExecutorId(anyString(), anyInt(), anyInt())).thenReturn(fightPage);
+        when(fightService.getFightsByExecutorId(anyString(), anyInt(), anyInt())).thenReturn(fightPage);
+        when(fightMapper.convertToDto(any(Fight.class))).thenReturn(fightDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/sports/user/fight/user1")
+        mockMvc.perform(get("/api/v1/sports/user/fight/user1")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -67,10 +78,12 @@ class FightControllerTest {
     }
 
     @Test
-    void testCreateFight() throws Exception {
-        when(fightService.createFight(any(CreateFight.class))).thenReturn(fightDto);
+    void testCreateFightSuccess() throws Exception {
+        when(fightMapper.convert(any(CreateFight.class))).thenReturn(fight);
+        when(fightService.createFight(any(Fight.class))).thenReturn(fight);
+        when(fightMapper.convertToDto(any(Fight.class))).thenReturn(fightDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/sports/user/fight")
+        mockMvc.perform(post("/api/v1/sports/user/fight")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createFight)))
                 .andExpect(status().isCreated())
@@ -81,10 +94,11 @@ class FightControllerTest {
     }
 
     @Test
-    void testUpdateFightStatus() throws Exception {
-        when(fightService.updateFightStatus(anyLong(), any(FightStatus.class))).thenReturn(fightDto);
+    void testUpdateFightStatusSuccess() throws Exception {
+        when(fightService.updateFightStatus(any(Long.class), any(FightStatus.class))).thenReturn(fight);
+        when(fightMapper.convertToDto(any(Fight.class))).thenReturn(fightDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/sports/user/fight/1/status")
+        mockMvc.perform(put("/api/v1/sports/user/fight/1/status")
                         .param("newStatus", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(1)))

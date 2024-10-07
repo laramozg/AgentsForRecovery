@@ -7,36 +7,35 @@ CREATE TABLE users (
 
 
 CREATE TABLE auth_data (
-                           username VARCHAR(30) REFERENCES users(username) ON DELETE CASCADE,
+                           username VARCHAR(30) PRIMARY KEY,
                            password VARCHAR(100) NOT NULL,
-                           PRIMARY KEY (username)
+                           CONSTRAINT fk_auth_user FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
 
 CREATE TABLE cities (
-                        id SERIAL PRIMARY KEY,
+                        id BIGSERIAL PRIMARY KEY,
                         name VARCHAR(30) NOT NULL,
                         region VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE executors (
-                           username VARCHAR(30) REFERENCES users(username) ON DELETE CASCADE,
-                           passport_series_number VARCHAR(10) NOT NULL,
+                           username VARCHAR(30) PRIMARY KEY,
+                           passport_series_number VARCHAR(50) NOT NULL,
                            weight DOUBLE PRECISION NOT NULL,
                            height DOUBLE PRECISION NOT NULL,
-                           rating DOUBLE PRECISION DEFAULT 0 NOT NULL,
+                           rating DOUBLE PRECISION DEFAULT 0.0 NOT NULL,
                            completed_orders INTEGER DEFAULT 0 NOT NULL,
-                           PRIMARY KEY (username)
+                           CONSTRAINT fk_executor_user FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
 
-
 CREATE TABLE mutilations(
-                           id SERIAL PRIMARY KEY,
+                           id BIGSERIAL PRIMARY KEY,
                            type VARCHAR(100) NOT NULL,
                            price INTEGER NOT NULL
 );
 
 CREATE TABLE victims (
-                         id SERIAL PRIMARY KEY,
+                         id BIGSERIAL PRIMARY KEY,
                          first_name VARCHAR(15) NOT NULL,
                          last_name VARCHAR(15) NOT NULL,
                          workplace VARCHAR(50),
@@ -47,22 +46,29 @@ CREATE TABLE victims (
 );
 
 CREATE TABLE orders (
-                        id SERIAL PRIMARY KEY,
-                        username VARCHAR(30) REFERENCES users(username),
-                        city_id BIGINT REFERENCES cities(id),
-                        victim_id BIGINT REFERENCES victims(id),
+                        id BIGSERIAL PRIMARY KEY,
+                        username VARCHAR(30) NOT NULL,
+                        city_id BIGINT NOT NULL,
+                        victim_id BIGINT NOT NULL,
                         deadline DATE NOT NULL,
-                        status VARCHAR(15) NOT NULL
+                        status VARCHAR(15) NOT NULL,
+                        CONSTRAINT fk_orders_user FOREIGN KEY (username) REFERENCES users(username),
+                        CONSTRAINT fk_orders_city FOREIGN KEY (city_id) REFERENCES cities(id),
+                        CONSTRAINT fk_orders_victim FOREIGN KEY (victim_id) REFERENCES victims(id)
 );
+
 
 CREATE TABLE order_mutilations (
-                                   order_id BIGINT REFERENCES orders(id),
-                                   mutilation_id BIGINT REFERENCES mutilations(id),
-                                   PRIMARY KEY (order_id, mutilation_id)
+                                   order_id BIGINT NOT NULL,
+                                   mutilation_id BIGINT NOT NULL,
+                                   PRIMARY KEY (order_id, mutilation_id),
+                                   CONSTRAINT fk_order_mutilations_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                                   CONSTRAINT fk_order_mutilations_mutilation FOREIGN KEY (mutilation_id) REFERENCES mutilations(id) ON DELETE CASCADE
 );
 
+
 CREATE TABLE fights (
-                        id SERIAL PRIMARY KEY,
+                        id BIGSERIAL PRIMARY KEY,
                         executor_id VARCHAR REFERENCES executors(username),
                         order_id BIGINT REFERENCES orders(id),
                         status VARCHAR(15) NOT NULL
