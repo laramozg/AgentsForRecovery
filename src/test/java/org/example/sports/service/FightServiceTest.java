@@ -1,187 +1,133 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.sports.model.*;
+import org.example.sports.model.Executor;
+import org.example.sports.model.Fight;
+import org.example.sports.model.Order;
 import org.example.sports.model.enums.FightStatus;
 import org.example.sports.model.enums.OrderStatus;
-import org.example.sports.model.enums.Role;
-import org.example.sports.repositore.*;
-import org.junit.jupiter.api.AfterEach;
+import org.example.sports.repositore.FightRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Optional;
 
+import static org.example.sports.util.Models.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class FightServiceTest extends AbstractServiceTest {
+class FightServiceTest {
 
-    @Autowired
+    @InjectMocks
     private FightService fightService;
 
-    @Autowired
+    @Mock
+    private OrderService orderService;
+
+    @Mock
+    private ExecutorService executorService;
+
+    @Mock
     private FightRepository fightRepository;
-
-    @Autowired
-    private ExecutorRepository executorRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private CityRepository cityRepository;
-
-    @Autowired
-    private VictimRepository victimRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    private Executor executor;
-    private Order order;
 
     @BeforeEach
     void setUp() {
-        User userCustomer = buildCreateUser("testUser2", "user", "@user", Role.CUSTOMER);
-        User userExecutor = buildCreateUser("testUser1", "user", "@user", Role.EXECUTOR);
-        City city = buildCreateCity();
-        Victim victim = buildCreateVictim();
-        executor = buildCreateExecutor(userExecutor);
-        order = buildCreateOrder(userCustomer, city, victim, OrderStatus.WAITING, LocalDate.now().plusDays(5));
-
-    }
-
-    @AfterEach
-    void tearDown() {
-        fightRepository.deleteAll();
-        orderRepository.deleteAll();
-        executorRepository.deleteAll();
-        userRepository.deleteAll();
-        cityRepository.deleteAll();
-        victimRepository.deleteAll();
-    }
-
-    @Test
-    void testGetFightsByExecutorId() {
-
-        Fight fight = fightRepository.save(Fight.builder()
-                .executor(executor)
-                .order(order)
-                .status(FightStatus.PENDING)
-                .build());
-
-        Page<Fight> fights = fightService.getFightsByExecutorId(executor.getUsername(), 0, 10);
-
-        assertNotNull(fights);
-        assertEquals(1, fights.getTotalElements());
-        assertEquals(fight.getId(), fights.getContent().get(0).getId());
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
     void testCreateFight() {
-        Fight createFight = Fight.builder()
-                .executor(executor)
-                .order(order)
-                .status(FightStatus.PENDING)
-                .build();
-        Fight createdFight = fightService.createFight(createFight);
+        Fight fight = FIGHT();
 
-        assertNotNull(createdFight);
-        assertEquals(FightStatus.PENDING, createdFight.getStatus());
-        assertEquals(executor.getUsername(), createdFight.getExecutor().getUsername());
-        assertEquals(order.getId(), createdFight.getOrder().getId());
+        when(orderService.getOrderById(anyLong())).thenReturn(ORDER());
+        when(fightRepository.save(any(Fight.class))).thenReturn(fight);
+
+        Fight result = fightService.createFight(fight);
+
+        assertNotNull(result);
+        assertEquals(FightStatus.PENDING, result.getStatus());
     }
 
     @Test
-    void testUpdateFightStatus() {
-        Fight fight = fightRepository.save(Fight.builder()
-                .executor(executor)
-                .order(order)
-                .status(FightStatus.PENDING)
-                .build());
+    void testGetFightByIdNotFound() {
+        assertThrows(EntityNotFoundException.class, () -> fightService.getFightById(1L));
+    }
 
-        Fight updatedFight = fightService.updateFightStatus(fight.getId(), FightStatus.VICTORY);
+    @Test
+    void testGetFightsByExecutorId() {
+        Fight fight = FIGHT();
 
-        assertNotNull(updatedFight);
+        Page<Fight> page = new PageImpl<>(Collections.singletonList(fight));
+        Pageable pageable = PageRequest.of(0, 10);
+        when(fightRepository.findByExecutor_Username(fight.getExecutor().getUsername(), pageable)).thenReturn(page);
+
+        Page<Fight> result = fightService.getFightsByExecutorId(fight.getExecutor().getUsername(), 0, 10);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals(fight, result.getContent().get(0));
+    }
+
+    @Test
+    void testGetFightById() {
+        Fight fight = FIGHT();
+
+        when(fightRepository.findById(anyLong())).thenReturn(Optional.of(fight));
+
+        Fight result = fightService.getFightById(1L);
+
+        assertEquals(fight, result);
+    }
+
+    @Test
+    void testUpdateFightStatus_Victory() {
+        Fight fight = FIGHT();
+        Order order = ORDER();
+        Executor executor = EXECUTOR();
+
+        when(fightRepository.findById(anyLong())).thenReturn(Optional.of(fight));
+        when(orderService.getOrderById(anyLong())).thenReturn(order);
+        when(executorService.getExecutorById(anyString())).thenReturn(executor);
+        when(fightRepository.save(any(Fight.class))).thenReturn(fight);
+        when(fightRepository.countByExecutorUsernameAndStatus(anyString(), eq(FightStatus.VICTORY))).thenReturn(1L);
+        when(fightRepository.countByExecutorUsername(anyString())).thenReturn(1L);
+
+        Fight updatedFight = fightService.updateFightStatus(1L, FightStatus.VICTORY);
+
+        assertEquals(10.0, executor.getRating());
+        assertEquals(1, executor.getCompletedOrders());
         assertEquals(FightStatus.VICTORY, updatedFight.getStatus());
+        assertEquals(OrderStatus.DONE, order.getStatus());
 
-        Order updatedOrder = orderRepository.findById(order.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-        assertEquals(OrderStatus.DONE, updatedOrder.getStatus());
-
-        Executor updatedExecutor = executorRepository.findById(executor.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
-        assertEquals(1, updatedExecutor.getCompletedOrders());
-
-        assertTrue(updatedExecutor.getRating() > 0);
     }
 
     @Test
-    void testUpdateExecutorRating() {
-        Fight fight = fightRepository.save(Fight.builder()
-                .executor(executor)
-                .order(order)
-                .status(FightStatus.VICTORY)
-                .build());
+    void testUpdateFightStatus_Loss() {
+        Fight fight = FIGHT();
+        Order order = ORDER();
+        Executor executor = EXECUTOR();
 
-        fightService.updateFightStatus(fight.getId(), FightStatus.VICTORY);
+        when(fightRepository.findById(anyLong())).thenReturn(Optional.of(fight));
+        when(orderService.getOrderById(anyLong())).thenReturn(order);
+        when(executorService.getExecutorById(anyString())).thenReturn(executor);
+        when(fightRepository.save(any(Fight.class))).thenReturn(fight);
+        when(fightRepository.countByExecutorUsernameAndStatus(anyString(), eq(FightStatus.VICTORY))).thenReturn(0L);
+        when(fightRepository.countByExecutorUsername(anyString())).thenReturn(1L);
 
-        Executor updatedExecutor = executorRepository.findById(executor.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
-        assertEquals(10.0, updatedExecutor.getRating());
-    }
+        Fight updatedFight = fightService.updateFightStatus(1L, FightStatus.LOSS);
 
-
-    @Test
-    void testUpdateFightStatusThrowsExceptionIfFightNotFound() {
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            fightService.updateFightStatus(999L, FightStatus.VICTORY);
-        });
-
-        assertEquals("Fight not found", exception.getMessage());
-    }
-
-
-    @Test
-    void testUpdateFightStatusChangesOrderAndExecutorStatusToWaiting() {
-        Fight fight = Fight.builder()
-                .executor(executor)
-                .order(order)
-                .status(FightStatus.PENDING)
-                .build();
-        fightRepository.save(fight);
-
-        Fight fightDto = fightService.updateFightStatus(fight.getId(), FightStatus.LOSS);
-
+        assertEquals(0.0, executor.getRating());
+        assertEquals(0, executor.getCompletedOrders());
+        assertEquals(FightStatus.LOSS, updatedFight.getStatus());
         assertEquals(OrderStatus.WAITING, order.getStatus());
-        assertEquals(FightStatus.LOSS, fightDto.getStatus());
-    }
-
-    private User buildCreateUser(String username, String nick, String telegram, Role role) {
-        return userRepository.save(User.builder().username(username).nick(nick).telegram(telegram).role(role).build());
-    }
-
-    private City buildCreateCity() {
-        return cityRepository.save(City.builder().name("TestCity").region("Region").build());
-    }
-
-    private Victim buildCreateVictim() {
-        return victimRepository.save(Victim.builder().firstName("John").lastName("Doe").workplace("Workplace")
-                .position("Position").residence("Address").phone("1234567890").description("Description").build());
-    }
-
-    private Order buildCreateOrder(User user, City city, Victim victim, OrderStatus status, LocalDate deadline) {
-        return orderRepository.save(Order.builder().user(user).city(city).victim(victim)
-                .status(status).deadline(deadline).build());
-    }
-
-    private Executor buildCreateExecutor(User user) {
-        return executorRepository.save(Executor.builder().username(user.getUsername()).passportSeriesNumber("123456")
-                .weight(75.0).height(180.0).rating(0.0).completedOrders(0).user(user).build());
     }
 
 }

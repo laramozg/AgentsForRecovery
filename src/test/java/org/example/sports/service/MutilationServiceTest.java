@@ -4,96 +4,144 @@ import jakarta.persistence.EntityNotFoundException;
 import org.example.sports.controller.mutilation.dto.MutilationRequest;
 import org.example.sports.model.Mutilation;
 import org.example.sports.repositore.MutilationRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
+import static org.example.sports.util.Models.MUTILATION;
+import static org.example.sports.util.Models.CREATE_MUTILATION_REQUEST;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class MutilationServiceTest extends AbstractServiceTest {
-                                                                                                          
-    @Autowired
-    private MutilationService mutilationService;
+class MutilationServiceTest {
 
-    @Autowired
+    @Mock
     private MutilationRepository mutilationRepository;
 
-    private Mutilation mutilation;
+    @InjectMocks
+    private MutilationService mutilationService;
 
     @BeforeEach
     void setUp() {
-        mutilation = buildCreateMutilation("Type1", 1000);
-    }
-
-    @AfterEach
-    void tearDown() {
-        mutilationRepository.deleteAll();
-    }
-
-    private Mutilation buildCreateMutilation(String type, int price) {
-        return mutilationRepository.save( Mutilation.builder().type(type).price(price).build());
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void createMutilationSuccessfully() {
-        Mutilation createdMutilation = mutilationService.createMutilation(
-                new MutilationRequest("Type1", 1000));
+    void createMutilation_ShouldCreateAndReturnMutilation() {
+        MutilationRequest request = CREATE_MUTILATION_REQUEST();
+
+        when(mutilationRepository.save(any(Mutilation.class))).thenReturn(MUTILATION());
+
+        Mutilation createdMutilation = mutilationService.createMutilation(request);
 
         assertNotNull(createdMutilation);
-        assertEquals("Type1", createdMutilation.getType());
-        assertEquals(1000, createdMutilation.getPrice());
+        assertEquals(request.type(), createdMutilation.getType());
+        assertEquals(request.price(), createdMutilation.getPrice());
     }
 
     @Test
-    void findAllMutilationsSuccessfully() {
-        buildCreateMutilation("Type2", 2000);
+    void findAllMutilations_ShouldReturnPageOfMutilations() {
+        Mutilation mutilation = MUTILATION();
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Mutilation> mutilationPage = new PageImpl<>(Collections.singletonList(mutilation), pageable, 1);
 
-        Page<Mutilation> mutilations = mutilationService.findAllMutilations(0, 10);
+        when(mutilationRepository.findAll(any(Pageable.class))).thenReturn(mutilationPage);
 
-        assertNotNull(mutilations);
-        assertEquals(2, mutilations.getTotalElements());
+        Page<Mutilation> result = mutilationService.findAllMutilations(0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(mutilation, result.getContent().get(0));
     }
 
     @Test
-    void findMutilationByIdSuccessfully() {
-        Mutilation foundMutilation = mutilationService.findMutilationById(mutilation.getId());
+    void findMutilationById_ShouldReturnMutilationWhenFound() {
+        Mutilation expectedMutilation = MUTILATION();
+        when(mutilationRepository.findById(anyLong())).thenReturn(Optional.of(expectedMutilation));
+
+        Mutilation foundMutilation = mutilationService.findMutilationById(expectedMutilation.getId());
 
         assertNotNull(foundMutilation);
-        assertEquals("Type1", foundMutilation.getType());
+        assertEquals(expectedMutilation.getId(), foundMutilation.getId());
+
     }
 
     @Test
-    void updateMutilationSuccessfully() {
+    void findMutilationById_ShouldThrowExceptionWhenNotFound() {
+        when(mutilationRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        Mutilation updatedMutilationDto = mutilationService.updateMutilation(mutilation.getId(),
-                new MutilationRequest("Type2", 2000));
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                mutilationService.findMutilationById(1L));
 
-        assertNotNull(updatedMutilationDto);
-        assertEquals("Type2", updatedMutilationDto.getType());
-        assertEquals(2000, updatedMutilationDto.getPrice());
+        assertEquals("Mutilation not found", exception.getMessage());
     }
 
     @Test
-    void deleteMutilationSuccessfully() {
-        mutilationService.deleteMutilation(mutilation.getId());
+    void deleteMutilation_ShouldDeleteMutilation() {
+        doNothing().when(mutilationRepository).deleteById(anyLong());
 
-        assertThrows(EntityNotFoundException.class, () -> mutilationService.findMutilationById(mutilation.getId()));
+        mutilationService.deleteMutilation(1L);
+
+        verify(mutilationRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void testFindAllMutilationsById_Success() {
-        Mutilation mutilation1 = mutilationRepository.save(Mutilation.builder().type("Type1").price(1000).build());
-        Mutilation mutilation2 = mutilationRepository.save(Mutilation.builder().type("Type2").price(2000).build());
+    void findAllMutilationsById_ShouldReturnSetOfMutilationsWhenAllFound() {
+        Set<Long> mutilationIds = Set.of(1L);
+        Mutilation mutilation = MUTILATION();
+        when(mutilationRepository.findAllById(mutilationIds)).thenReturn(Collections.singletonList(mutilation));
 
-        Set<Long> ids = Set.of(mutilation1.getId(), mutilation2.getId());
-        Set<Mutilation> mutilations = mutilationService.findAllMutilationsById(ids);
+        Set<Mutilation> result = mutilationService.findAllMutilationsById(mutilationIds);
 
-        assertEquals(2, mutilations.size());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.contains(mutilation));
+    }
+
+    @Test
+    void findAllMutilationsById_ShouldThrowExceptionWhenSomeNotFound() {
+        Set<Long> mutilationIds = Set.of(1L, 2L);
+        when(mutilationRepository.findAllById(mutilationIds)).thenReturn(Collections.singletonList(MUTILATION()));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                mutilationService.findAllMutilationsById(mutilationIds));
+
+        assertEquals("Some mutilations not found", exception.getMessage());
+    }
+
+    @Test
+    void updateMutilation_ShouldUpdateAndReturnMutilation() {
+        MutilationRequest request = CREATE_MUTILATION_REQUEST();
+        Mutilation existingMutilation = MUTILATION();
+
+        when(mutilationRepository.findById(anyLong())).thenReturn(Optional.of(existingMutilation));
+        when(mutilationRepository.save(any(Mutilation.class))).thenReturn(existingMutilation);
+
+        Mutilation updatedMutilation = mutilationService.updateMutilation(1L, request);
+
+        assertNotNull(updatedMutilation);
+        assertEquals(request.type(), updatedMutilation.getType());
+        assertEquals(request.price(), updatedMutilation.getPrice());
+    }
+
+    @Test
+    void updateMutilation_ShouldThrowExceptionWhenNotFound() {
+        when(mutilationRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                mutilationService.updateMutilation(1L, CREATE_MUTILATION_REQUEST()));
+
+        assertEquals("Mutilation not found", exception.getMessage());
     }
 }

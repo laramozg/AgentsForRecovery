@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AuthorizationRepository extends JpaRepository<AuthorizationData, String> {
-    AuthorizationData findByUsername(String username);
 }

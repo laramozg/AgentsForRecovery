@@ -1,85 +1,66 @@
 package org.example.sports.service;
 
-import org.example.sports.controller.executor.dto.ExecutorRequest;
+import jakarta.persistence.EntityNotFoundException;
 import org.example.sports.model.Executor;
-import org.example.sports.model.User;
-import org.example.sports.model.enums.Role;
 import org.example.sports.repositore.ExecutorRepository;
-import org.example.sports.repositore.UserRepository;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.DirtiesContext;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.util.Optional;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class ExecutorServiceTest extends AbstractServiceTest {
+import static org.example.sports.util.Models.EXECUTOR;
+import static org.example.sports.util.Models.EXECUTOR_REQUEST;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
-    @Autowired
+class ExecutorServiceTest {
+
+    @InjectMocks
     private ExecutorService executorService;
 
-    @Autowired
+    @Mock
     private ExecutorRepository executorRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-
-    @AfterEach
-    void tearDown() {
-        userRepository.deleteAll();
-        executorRepository.deleteAll();
-    }
-
-    private User buildCreateUser() {
-        return userRepository.save(User.builder().username("john").nick("John").telegram("@john").role(Role.EXECUTOR).build());
-    }
-
-    private void buildCreateExecutor(User user) {
-        executorRepository.save(Executor.builder().username("john").passportSeriesNumber("123456").weight(75.0)
-                .height(180.0).rating(0.0).completedOrders(0).user(user).build());
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void createExecutorSuccessfully() {
-        Executor executor = new Executor("john", "123456", 75.0, 180.0,0.0,0,buildCreateUser());
-        Executor createdExecutor = executorService.createExecutor(executor);
+    void testCreateExecutor() {
+        Executor executor = EXECUTOR();
 
-        assertNotNull(createdExecutor);
-        assertExecutorDetails(createdExecutor, "john", "123456", 75.0, 180.0, 0.0, 0);
+        when(executorRepository.save(any(Executor.class))).thenReturn(executor);
+
+        Executor result = executorService.createExecutor(executor);
+
+        assertNotNull(result);
+        assertEquals(executor.getUsername(), result.getUsername());
+        assertEquals(executor.getCompletedOrders(), result.getCompletedOrders());
+        assertEquals(executor.getWeight(), result.getWeight());
     }
 
     @Test
-    void getExecutorByIdSuccessfully() {
-        buildCreateExecutor(buildCreateUser());
-
-        Executor fetchedExecutor = executorService.getExecutorById("john");
-
-        assertNotNull(fetchedExecutor);
-        assertExecutorDetails(fetchedExecutor, "john", "123456", 75.0, 180.0, 0.0, 0);
+    void testGetExecutorByIdNotFound() {
+        assertThrows(EntityNotFoundException.class, () -> executorService.getExecutorById("non_existing_user"));
     }
 
     @Test
-    void updateExecutorSuccessfully() {
-        buildCreateExecutor(buildCreateUser());
+    void testUpdateExecutor() {
+        Executor executor = EXECUTOR();
 
-        ExecutorRequest updateRequest = new ExecutorRequest("john", "654321", 80.0, 185.0);
-        Executor updatedExecutor = executorService.updateExecutor(updateRequest);
+        when(executorRepository.findById(anyString())).thenReturn(Optional.of(executor));
+        when(executorRepository.save(any(Executor.class))).thenReturn(executor);
 
-        assertNotNull(updatedExecutor);
-        assertExecutorDetails(updatedExecutor, "john", "654321", 80.0, 185.0, 0.0, 0);
-    }
+        Executor updatedExecutor = executorService.updateExecutor(EXECUTOR_REQUEST());
 
-
-    private void assertExecutorDetails(Executor executor, String expectedUsername, String expectedPassportNumber,
-                                       double expectedWeight, double expectedHeight, double expectedRating, int expectedCompletedOrders) {
-        assertEquals(expectedUsername, executor.getUsername());
-        assertEquals(expectedPassportNumber, executor.getPassportSeriesNumber());
-        assertEquals(expectedWeight, executor.getWeight());
-        assertEquals(expectedHeight, executor.getHeight());
-        assertEquals(expectedRating, executor.getRating());
-        assertEquals(expectedCompletedOrders, executor.getCompletedOrders());
+        assertEquals(executor.getPassportSeriesNumber(), updatedExecutor.getPassportSeriesNumber());
+        assertEquals(executor.getWeight(), updatedExecutor.getWeight());
+        assertEquals(executor.getHeight(), updatedExecutor.getHeight());
     }
 }

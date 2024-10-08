@@ -3,15 +3,18 @@ package org.example.sports.mapper;
 import org.example.sports.controller.executor.dto.ExecutorDto;
 import org.example.sports.controller.executor.dto.ExecutorRequest;
 import org.example.sports.model.Executor;
-import org.example.sports.model.User;
 import org.example.sports.service.UserService;
+import org.example.sports.util.Models;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import static org.example.sports.util.Models.EXECUTOR;
+import static org.example.sports.util.Models.EXECUTOR_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 class ExecutorMapperTest {
@@ -28,38 +31,28 @@ class ExecutorMapperTest {
 
     @Test
     void testConvertToDto() {
-        Executor executor = Executor.builder()
-                .username("testExecutor")
-                .passportSeriesNumber("123456789")
-                .weight(80.0)
-                .height(180.0)
-                .rating(4.5)
-                .completedOrders(10)
-                .build();
+        Executor executor = EXECUTOR();
 
         ExecutorDto executorDto = executorMapper.convertToDto(executor);
 
-        assertEquals("testExecutor", executorDto.username());
-        assertEquals("123456789", executorDto.passportSeriesNumber());
-        assertEquals(80.0, executorDto.weight());
-        assertEquals(180.0, executorDto.height());
-        assertEquals(4.5, executorDto.rating());
-        assertEquals(10, executorDto.completedOrders());
+        assertEquals(executor.getUsername(), executorDto.username());
+        assertEquals(executor.getPassportSeriesNumber(), executorDto.passportSeriesNumber());
+        assertEquals(executor.getWeight(), executorDto.weight());
+        assertEquals(executor.getHeight(), executorDto.height());
+        assertEquals(executor.getRating(), executorDto.rating());
+        assertEquals(executor.getCompletedOrders(), executorDto.completedOrders());
     }
     @Test
     void testConvert() {
-        ExecutorRequest executorRequest = new ExecutorRequest("testUser", "123456789", 80.0, 180.0);
+        ExecutorRequest executorRequest = EXECUTOR_REQUEST();
 
-        User user = User.builder().username("testUser").build();
-
-        when(userService.getUserById("testUser")).thenReturn(user);
+        when(userService.getUserById(any(String.class))).thenReturn(Models.USER_EXECUTOR());
 
         Executor executor = executorMapper.convert(executorRequest);
 
-        assertEquals("testUser", executor.getUsername());
-        assertEquals("123456789", executor.getPassportSeriesNumber());
-        assertEquals(80.0, executor.getWeight());
-        assertEquals(180.0, executor.getHeight());
-        assertEquals(user, executor.getUser());
+        assertEquals(executorRequest.username(), executor.getUsername());
+        assertEquals(executorRequest.passportSeriesNumber(), executor.getPassportSeriesNumber());
+        assertEquals(executorRequest.weight(), executor.getWeight());
+        assertEquals(executorRequest.height(), executor.getHeight());
     }
 }

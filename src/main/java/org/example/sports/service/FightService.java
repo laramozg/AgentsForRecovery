@@ -8,6 +8,7 @@ import org.example.sports.model.Fight;
 import org.example.sports.model.Order;
 import org.example.sports.model.enums.FightStatus;
 import org.example.sports.model.enums.OrderStatus;
+import org.example.sports.repositore.ExecutorRepository;
 import org.example.sports.repositore.FightRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +21,7 @@ public class FightService {
     private final OrderService orderService;
     private final ExecutorService executorService;
     private final FightRepository fightRepository;
+    private final ExecutorRepository executorRepository;
 
     public Page<Fight> getFightsByExecutorId(String executorId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);

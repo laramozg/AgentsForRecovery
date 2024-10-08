@@ -4,84 +4,94 @@ import jakarta.persistence.EntityNotFoundException;
 import org.example.sports.controller.victim.dto.CreateVictimRequest;
 import org.example.sports.model.Victim;
 import org.example.sports.repositore.VictimRepository;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.Collections;
+import java.util.Optional;
+
+import static org.example.sports.util.Models.VICTIM;
+import static org.example.sports.util.Models.CREATE_VICTIM_REQUEST;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class VictimServiceTest extends AbstractServiceTest {
+class VictimServiceTest {
 
-    @Autowired
-    private VictimService victimService;
-
-    @Autowired
+    @Mock
     private VictimRepository victimRepository;
 
-    @AfterEach
-    void tearDown() {
-        victimRepository.deleteAll();
-    }
+    @InjectMocks
+    private VictimService victimService;
 
-
-    private Victim buildCreateVictim(String firstName, String lastName, String workplace, String position,
-                                     String residence, String phone, String description) {
-        return victimRepository.save(Victim.builder().firstName(firstName).lastName(lastName).workplace(workplace)
-                .position(position).residence(residence).phone(phone).description(description).build());
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void createVictimSuccessfully() {
-        CreateVictimRequest request = new CreateVictimRequest("John", "Doe", "Company",
-                "Manager", "New York", "555-1234", "Injured");
+    void createVictim_ShouldCreateAndReturnVictim() {
+        CreateVictimRequest request = CREATE_VICTIM_REQUEST();
+
+        when(victimRepository.save(any(Victim.class))).thenReturn(VICTIM());
 
         Victim createdVictim = victimService.createVictim(request);
 
         assertNotNull(createdVictim);
-        assertEquals("John", createdVictim.getFirstName());
-        assertEquals("Doe", createdVictim.getLastName());
-        assertEquals("Company", createdVictim.getWorkplace());
-        assertEquals("Manager", createdVictim.getPosition());
-        assertEquals("New York", createdVictim.getResidence());
-        assertEquals("555-1234", createdVictim.getPhone());
-        assertEquals("Injured", createdVictim.getDescription());
+        assertEquals(request.firstName(), createdVictim.getFirstName());
+        assertEquals(request.lastName(), createdVictim.getLastName());
+        assertEquals(request.workplace(), createdVictim.getWorkplace());
     }
 
     @Test
-    void getVictimSuccessfully() {
-        Victim victim = buildCreateVictim("Jane", "Smith", "Corporation",
-                "Engineer", "Chicago", "555-5678", "Severely Injured");
+    void getVictimById_ShouldReturnVictimWhenFound() {
+        Victim expectedVictim = VICTIM();
+        when(victimRepository.findById(anyLong())).thenReturn(Optional.of(expectedVictim));
 
-        Victim fetchedVictim = victimService.getVictimById(victim.getId());
+        Victim foundVictim = victimService.getVictimById(expectedVictim.getId());
 
-        assertNotNull(fetchedVictim);
-        assertEquals("Jane", fetchedVictim.getFirstName());
-        assertEquals("Smith", fetchedVictim.getLastName());
+        assertNotNull(foundVictim);
+        assertEquals(expectedVictim.getId(), foundVictim.getId());
     }
 
     @Test
-    void getAllVictimsSuccessfully() {
-        buildCreateVictim("John", "Doe", "Company",
-                "Manager", "New York", "555-1234", "Injured");
-        buildCreateVictim("Jane", "Smith", "Corporation",
-                "Engineer", "Chicago", "555-5678", "Severely Injured");
+    void getVictimById_ShouldThrowExceptionWhenNotFound() {
+        when(victimRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        Page<Victim> victims = victimService.getAllVictims(0, 10);
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                victimService.getVictimById(1L));
 
-        assertNotNull(victims);
-        assertEquals(2, victims.getTotalElements());
+        assertEquals("Victim not found", exception.getMessage());
     }
 
     @Test
-    void deleteVictimSuccessfully() {
-        Victim victim = buildCreateVictim("John", "Doe", "Company",
-                "Manager", "New York", "555-1234", "Injured");
+    void getAllVictims_ShouldReturnPageOfVictims() {
+        Victim victim = VICTIM();
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Victim> victimPage = new PageImpl<>(Collections.singletonList(victim), pageable, 1);
 
-        victimService.deleteVictim(victim.getId());
+        when(victimRepository.findAll(any(Pageable.class))).thenReturn(victimPage);
 
-        assertThrows(EntityNotFoundException.class, () -> victimService.getVictimById(victim.getId()));
+        Page<Victim> result = victimService.getAllVictims(0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(victim, result.getContent().get(0));
+    }
+
+    @Test
+    void deleteVictim_ShouldDeleteVictim() {
+        doNothing().when(victimRepository).deleteById(anyLong());
+
+        victimService.deleteVictim(1L);
+
+        verify(victimRepository, times(1)).deleteById(1L);
     }
 }

@@ -1,73 +1,106 @@
 package org.example.sports.service;
 
-import org.example.sports.controller.city.dto.CreateCity;
+import jakarta.persistence.EntityNotFoundException;
 import org.example.sports.model.City;
 import org.example.sports.repositore.CityRepository;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.util.List;
+import java.util.Optional;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class CityServiceTest extends AbstractServiceTest {
+import static org.example.sports.util.Models.CITY;
+import static org.example.sports.util.Models.CREATE_CITY_REQUEST;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-    @Autowired
-    private CityService cityService;
+class CityServiceTest {
 
-    @Autowired
+    @Mock
     private CityRepository cityRepository;
 
-    @AfterEach
-    void tearDown() {
-        cityRepository.deleteAll();
-    }
+    @InjectMocks
+    private CityService cityService;
 
-    private City buildCreateCity(String name, String region) {
-        return cityRepository.save(City.builder().name(name).region(region).build());
-    }
-
-    @Test
-    void createCitySuccessfully() {
-        CreateCity createCity = new CreateCity("New York", "New York State");
-
-        City createdCity = cityService.createCity(createCity);
-
-        assertNotNull(createdCity);
-        assertEquals("New York", createdCity.getName());
-        assertEquals("New York State", createdCity.getRegion());
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void findAllCitiesSuccessfully() {
-        buildCreateCity("Los Angeles", "California");
-        buildCreateCity("Chicago", "Illinois");
+    void createCity_ShouldSaveAndReturnCity() {
+        City city = CITY();
 
-        Page<City> cities = cityService.findAllCities(0, 10);
+        when(cityRepository.save(any(City.class))).thenReturn(city);
 
-        assertNotNull(cities);
-        assertEquals(2, cities.getTotalElements());
+        City result = cityService.createCity(CREATE_CITY_REQUEST());
+
+        assertNotNull(result);
+        assertEquals(city.getName(), result.getName());
+        assertEquals(city.getRegion(), result.getRegion());
     }
 
     @Test
-    void countCitiesSuccessfully() {
-        buildCreateCity("Los Angeles", "California");
-        buildCreateCity("Chicago", "Illinois");
+    void findAllCities_ShouldReturnPageOfCities() {
+        City city1 = CITY();
+        City city2 = City.builder().name("Another City").region("Another Region").build();
+        Page<City> cityPage = new PageImpl<>(List.of(city1, city2));
 
-        long count = cityService.countCities();
+        when(cityRepository.findAll(any(Pageable.class))).thenReturn(cityPage);
 
-        assertEquals(2, count);
+        Page<City> result = cityService.findAllCities(0, 2);
+
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(city1.getName(), result.getContent().get(0).getName());
+        assertEquals(city2.getName(), result.getContent().get(1).getName());
     }
 
     @Test
-    void deleteCitySuccessfully() {
-        City city = buildCreateCity("Los Angeles", "California");
+    void getCityById_ShouldReturnCity_WhenCityExists() {
+        City city = CITY();
+        when(cityRepository.findById(anyLong())).thenReturn(Optional.of(city));
 
-        cityService.deleteCity(city.getId());
+        City result = cityService.getCityById(1L);
 
-        assertEquals(0, cityService.countCities());
+        assertNotNull(result);
+        assertEquals(city.getName(), result.getName());
     }
+
+    @Test
+    void getCityById_ShouldThrowException_WhenCityNotFound() {
+        when(cityRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(EntityNotFoundException.class, () -> {
+            cityService.getCityById(1L);
+        });
+
+        assertEquals("City not found", exception.getMessage());
+    }
+
+    @Test
+    void countCities_ShouldReturnCityCount() {
+        when(cityRepository.count()).thenReturn(5L);
+
+        long result = cityService.countCities();
+
+        assertEquals(5L, result);
+    }
+
+    @Test
+    void deleteCity_ShouldDeleteCityById() {
+        doNothing().when(cityRepository).deleteById(anyLong());
+
+        cityService.deleteCity(1L);
+
+        verify(cityRepository, times(1)).deleteById(1L);
+    }
+
 }
