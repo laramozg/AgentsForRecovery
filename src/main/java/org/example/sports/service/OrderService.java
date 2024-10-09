@@ -1,7 +1,6 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.model.Order;
 import org.example.sports.model.enums.OrderStatus;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 public class OrderService {
     private final OrderRepository orderRepository;
 
-    @Transactional
     public Order createOrder(Order order) {
         order.setStatus(OrderStatus.WAITING);
         return orderRepository.save(order);

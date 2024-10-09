@@ -1,6 +1,7 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.mutilation.dto.MutilationRequest;
 import org.example.sports.model.Mutilation;
@@ -10,9 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -51,6 +50,7 @@ public class MutilationService {
         return mutilations;
     }
 
+    @Transactional
     public Mutilation updateMutilation(Long id, MutilationRequest mutilationDto) {
         Mutilation mutilation = findMutilationById(id);
 

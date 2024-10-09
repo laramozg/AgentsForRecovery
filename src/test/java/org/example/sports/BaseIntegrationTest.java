@@ -2,8 +2,6 @@ package org.example.sports;
 
 import jakarta.transaction.Transactional;
 import org.example.sports.configuration.PostgresAutoConfiguration;
-import org.example.sports.model.City;
-import org.example.sports.model.Victim;
 import org.example.sports.repositore.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

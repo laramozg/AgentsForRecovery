@@ -1,6 +1,7 @@
 package org.example.sports.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.sports.controller.executor.dto.ExecutorRequest;
 import org.example.sports.model.Executor;
@@ -23,7 +24,7 @@ public class ExecutorService {
                 .orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' not found"));
     }
 
-
+    @Transactional
     public Executor updateExecutor(ExecutorRequest executorRequest) {
         Executor executor = getExecutorById(executorRequest.username());
         executor.setPassportSeriesNumber(executorRequest.passportSeriesNumber());

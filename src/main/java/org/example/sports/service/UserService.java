@@ -60,6 +60,7 @@ public class UserService {
         userRepository.deleteById(username);
     }
 
+    @Transactional
     public User updateUser(String username, UpdateUserRequest updateUserRequest) {
         User user = userRepository.findById(username)
                 .orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' not found"));
