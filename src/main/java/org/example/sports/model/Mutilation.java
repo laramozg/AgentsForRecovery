@@ -1,7 +1,11 @@
 package org.example.sports.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -23,6 +27,4 @@ public class Mutilation {
     @Column(nullable = false)
     private Integer price;
 
-    @ManyToMany(mappedBy = "mutilations", fetch = FetchType.LAZY)
-    private Set<Order> orders = new HashSet<>();
 }

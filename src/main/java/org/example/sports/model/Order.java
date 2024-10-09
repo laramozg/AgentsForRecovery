@@ -1,7 +1,10 @@
 package org.example.sports.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.example.sports.model.enums.OrderStatus;
 
 import java.time.LocalDate;
@@ -41,11 +44,6 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "order_mutilations",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "mutilation_id")
-    )
-    private Set<Mutilation> mutilations = new HashSet<>();
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<OrderMutilation> orderMutilations = new ArrayList<>();
 }

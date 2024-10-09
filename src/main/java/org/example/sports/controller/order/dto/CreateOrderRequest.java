@@ -4,14 +4,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
 
 public record CreateOrderRequest(
         @NotBlank String username,
         @NotNull Long cityId,
         @NotNull Long victimId,
         @NotNull LocalDate deadline,
-        Set<Long> mutilationIds
+        List<Long> mutilationIds
 
 ) {
 }

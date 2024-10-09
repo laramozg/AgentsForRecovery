@@ -14,7 +14,7 @@ import org.example.sports.model.enums.OrderStatus;
 import org.example.sports.model.enums.Role;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
 
 public class Models {
 
@@ -62,6 +62,7 @@ public class Models {
                 .height(180.0)
                 .rating(0.0)
                 .completedOrders(0)
+                .user(USER_EXECUTOR())
                 .build();
     }
 
@@ -108,12 +109,19 @@ public class Models {
         return Mutilation.builder()
                 .id(1L)
                 .type("Type")
-                .price(1000).build();
+                .price(1000)
+                .build();
     }
 
     public static CreateOrderRequest CREATE_ORDER_REQUEST() {
-        return new CreateOrderRequest("john", 1L, 1L, LocalDate.now(), Set.of(1L));
+        return new CreateOrderRequest("john", 1L, 1L, LocalDate.now(), List.of(1L));
 
+    }
+
+    public static OrderMutilation ORDER_MUTILATION() {
+        return OrderMutilation.builder()
+                .order(ORDER())
+                .mutilation(MUTILATION()).build();
     }
 
     public static Order ORDER(){
@@ -123,8 +131,7 @@ public class Models {
                 .city(CITY())
                 .victim(VICTIM())
                 .deadline(LocalDate.now())
-                .status(OrderStatus.WAITING)
-                .mutilations(Set.of(MUTILATION())).build();
+                .status(OrderStatus.WAITING).build();
 
     }
 

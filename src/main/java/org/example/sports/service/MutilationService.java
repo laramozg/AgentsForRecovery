@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @RequiredArgsConstructor
@@ -42,8 +43,8 @@ public class MutilationService {
         mutilationRepository.deleteById(id);
     }
 
-    public Set<Mutilation> findAllMutilationsById(Set<Long> mutilationIds) {
-        Set<Mutilation> mutilations = new HashSet<>(mutilationRepository.findAllById(mutilationIds));
+    public List<Mutilation> findAllMutilationsById(List<Long> mutilationIds) {
+        List<Mutilation> mutilations = mutilationRepository.findAllByIdIn(mutilationIds);
         if (mutilations.size() != mutilationIds.size()) {
             throw new EntityNotFoundException("Some mutilations not found");
         }

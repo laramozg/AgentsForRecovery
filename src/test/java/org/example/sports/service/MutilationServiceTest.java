@@ -15,11 +15,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import static org.example.sports.util.Models.MUTILATION;
 import static org.example.sports.util.Models.CREATE_MUTILATION_REQUEST;
+import static org.example.sports.util.Models.MUTILATION;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -97,12 +97,12 @@ class MutilationServiceTest {
     }
 
     @Test
-    void findAllMutilationsById_ShouldReturnSetOfMutilationsWhenAllFound() {
-        Set<Long> mutilationIds = Set.of(1L);
+    void findAllMutilationsById_ShouldReturnListOfMutilationsWhenAllFound() {
+        List<Long> mutilationIds = List.of(1L);
         Mutilation mutilation = MUTILATION();
-        when(mutilationRepository.findAllById(mutilationIds)).thenReturn(Collections.singletonList(mutilation));
+        when(mutilationRepository.findAllByIdIn(mutilationIds)).thenReturn(Collections.singletonList(mutilation));
 
-        Set<Mutilation> result = mutilationService.findAllMutilationsById(mutilationIds);
+        List<Mutilation> result = mutilationService.findAllMutilationsById(mutilationIds);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -111,7 +111,7 @@ class MutilationServiceTest {
 
     @Test
     void findAllMutilationsById_ShouldThrowExceptionWhenSomeNotFound() {
-        Set<Long> mutilationIds = Set.of(1L, 2L);
+        List<Long> mutilationIds = List.of(1L, 2L);
         when(mutilationRepository.findAllById(mutilationIds)).thenReturn(Collections.singletonList(MUTILATION()));
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->

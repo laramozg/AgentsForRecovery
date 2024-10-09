@@ -1,6 +1,7 @@
 package org.example.sports.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.example.sports.BaseIntegrationTest;
 import org.example.sports.controller.mutilation.dto.MutilationRequest;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 class MutilationControllerTest extends BaseIntegrationTest {
 
     @Autowired
@@ -30,19 +32,21 @@ class MutilationControllerTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.price", is(mutilationRequest.price())));
     }
 
-//    @Test
-//    void testGetAllMutilationsSuccess() throws Exception {
-//        mockMvc.perform(get(API_PREFIX + "user/mutilation")
-//                        .param("page", "0")
-//                        .param("size", "10"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.content", is(empty())));
-//    }
+    @Test
+    void testGetAllMutilationsSuccess() throws Exception {
+        mockMvc.perform(get(API_PREFIX + "user/mutilation")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].type", is(mutilationRequest.type())));
+    }
 
     @Test
     void testGetMutilationByIdSuccess() throws Exception {
         mockMvc.perform(get(API_PREFIX + "user/mutilation/1"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type", is(mutilationRequest.type())))
+                .andExpect(jsonPath("$.price", is(mutilationRequest.price())));
     }
 
     @Test

@@ -6,6 +6,7 @@ import org.example.sports.controller.order.dto.CreateOrderRequest;
 import org.example.sports.controller.order.dto.OrderDto;
 import org.example.sports.model.Mutilation;
 import org.example.sports.model.Order;
+import org.example.sports.model.OrderMutilation;
 import org.example.sports.service.CityService;
 import org.example.sports.service.MutilationService;
 import org.example.sports.service.UserService;
@@ -13,7 +14,7 @@ import org.example.sports.service.VictimService;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @AllArgsConstructor
 @Component
@@ -31,15 +32,17 @@ public class OrderMapper {
                 order.getVictim().getId(),
                 order.getDeadline(),
                 order.getStatus().toString(),
-                order.getMutilations() != null ?
-                        order.getMutilations().stream()
+                order.getOrderMutilations() != null ?
+                        order.getOrderMutilations().stream()
                                 .map(this::toMutilationDto)
-                                .collect(Collectors.toSet()) :
-                        Collections.emptySet()
+                                .toList() :
+                        Collections.emptyList()
         );
     }
 
-    private MutilationDto toMutilationDto(Mutilation mutilation) {
+
+    private MutilationDto toMutilationDto(OrderMutilation orderMutilation) {
+        Mutilation mutilation = orderMutilation.getMutilation();
         return new MutilationDto(
                 mutilation.getId(),
                 mutilation.getType(),
@@ -48,13 +51,19 @@ public class OrderMapper {
     }
 
     public Order convert(CreateOrderRequest createOrderRequest){
-        return Order.builder()
+        List<Mutilation> mutilations = (mutilationService.findAllMutilationsById(createOrderRequest.mutilationIds()));
+        Order order = Order.builder()
                 .user(userService.getUserById(createOrderRequest.username()))
                 .city(cityService.getCityById(createOrderRequest.cityId()))
                 .victim(victimService.getVictimById(createOrderRequest.victimId()))
                 .deadline(createOrderRequest.deadline())
-                .mutilations(mutilationService.findAllMutilationsById(createOrderRequest.mutilationIds()))
                 .build();
+
+        List<OrderMutilation> orderMutilations = mutilations.stream()
+                .map(mutilation -> new OrderMutilation(order, mutilation))
+                .toList();
+        order.setOrderMutilations(orderMutilations);
+        return order;
     }
 
 

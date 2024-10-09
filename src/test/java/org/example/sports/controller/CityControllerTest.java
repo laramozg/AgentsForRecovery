@@ -1,6 +1,7 @@
 package org.example.sports.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.example.sports.BaseIntegrationTest;
 import org.example.sports.controller.city.dto.CreateCity;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@Transactional
 class CityControllerTest extends BaseIntegrationTest {
 
     @Autowired

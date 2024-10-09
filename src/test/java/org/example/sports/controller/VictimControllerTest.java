@@ -1,19 +1,20 @@
 package org.example.sports.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.example.sports.BaseIntegrationTest;
 import org.example.sports.controller.victim.dto.CreateVictimRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.example.sports.util.Models.CREATE_VICTIM_REQUEST;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 class VictimControllerTest extends BaseIntegrationTest {
 
     @Autowired
@@ -38,13 +39,15 @@ class VictimControllerTest extends BaseIntegrationTest {
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", is(empty())));
+                .andExpect(jsonPath("$.content[0].firstName", is(createVictimRequest.firstName())));
     }
 
     @Test
     void testGetVictimSuccess() throws Exception {
         mockMvc.perform(get(API_PREFIX + "user/victim/{id}", 1L))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName", is(createVictimRequest.firstName())))
+                .andExpect(jsonPath("$.lastName", is(createVictimRequest.lastName())));
     }
 
 
