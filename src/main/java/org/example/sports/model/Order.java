@@ -9,9 +9,7 @@ import org.example.sports.model.enums.OrderStatus;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Data
 @Builder
@@ -40,10 +38,12 @@ public class Order {
     @Column(nullable = false)
     private LocalDate deadline;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status;
+    private OrderStatus status = OrderStatus.WAITING;
 
+    @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderMutilation> orderMutilations = new ArrayList<>();
 }

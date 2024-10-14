@@ -2,17 +2,17 @@
 #Content-Type: application/json
 #
 #{
-#  "username": "user3",
-#  "nick": "user3",
-#  "telegram": "@user3",
+#  "username": "user4",
+#  "nick": "user4",
+#  "telegram": "@user4",
 #  "password": "user_password3",
 #  "role": "EXECUTOR"
 #}
 ###
 
 # Получить пользователя по username
-#GET http://localhost:8080/api/v1/sports/user/user2
-#Content-Type: application/json
+GET http://localhost:8080/api/v1/sports/user/user2
+Content-Type: application/json
 
 ###
 #Создать исполнителя
